@@ -1,8 +1,8 @@
 ---
 title: Arrays and linked lists
 date: 2026-09-24
-topics: [Data structures]
-tags: [arrays, linked-lists]
+topics: [HL]
+tags: [arrays, linked-lists, B]
 ---
 
 # Arrays:
