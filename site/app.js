@@ -31,8 +31,14 @@
     labels: { topics: new Map(), tags: new Map(), langs: new Map() },
     q: '', topics: new Set(), tags: new Set(), langs: new Set(), day: null, view: 'home',
     sort: store.get('notes-sort', 'newest'),
-    showAllTags: false, current: null, cache: new Map(),
+    showAllTags: false, current: null, cache: new Map(), share: false,
   };
+  // Link to a note in the current mode: share links keep the reader inside the share view
+  const noteLink = (slug, h) => `#/${state.share ? 'share' : 'note'}/${encodeURI(slug)}${h ? `?h=${encodeURIComponent(h)}` : ''}`;
+  function setShare(on) {
+    state.share = on;
+    document.documentElement.classList.toggle('share-mode', on);
+  }
 
   const main = $('#main');
   const listEl = $('#note-list');
@@ -238,22 +244,27 @@
     const toEditor = raw === '/new' || raw.startsWith('/edit/');
     if (state.view === 'editor' && window.NotesEditor) window.NotesEditor.close();
     if (toEditor) {
+      setShare(false);
       state.current = null;
       state.view = 'editor';
       markCurrent();
       let slug = null;
       if (raw.startsWith('/edit/')) { try { slug = decodeURIComponent(raw.slice(6)); } catch { slug = raw.slice(6); } }
       openEditor(slug);
-    } else if (raw.startsWith('/note/')) {
+    } else if (raw.startsWith('/note/') || raw.startsWith('/share/')) {
+      const share = raw.startsWith('/share/');
+      const modeChanged = share !== state.share;
+      setShare(share);
       state.view = 'note';
-      const rest = raw.slice(6);
+      const rest = raw.slice(share ? 7 : 6);
       const qi = rest.indexOf('?');
       let slug = qi < 0 ? rest : rest.slice(0, qi);
       try { slug = decodeURIComponent(slug); } catch { /* keep raw */ }
       const heading = qi < 0 ? null : new URLSearchParams(rest.slice(qi + 1)).get('h');
-      if (state.current && state.current.slug === slug && $('.note', main)) scrollToHeading(heading);
+      if (!modeChanged && state.current && state.current.slug === slug && $('.note', main)) scrollToHeading(heading);
       else showNote(slug, heading);
     } else {
+      setShare(false);
       state.current = null;
       state.view = 'home';
       markCurrent();
@@ -360,7 +371,7 @@
     }
     state.current = n;
     markCurrent();
-    document.title = `${n.title} | ${state.site.title || 'Notes'}`;
+    document.title = state.share ? n.title : `${n.title} | ${state.site.title || 'Notes'}`;
 
     let src = state.cache.get(slug);
     if (src == null) {
@@ -383,6 +394,16 @@
     main.innerHTML = noteHTML(n, renderMarkdown(src));
     const prose = $('.prose', main);
     enhance(prose, n);
+    if (state.share) {
+      for (const a of $$('a[href^="#/note/"], a[href^="#/share/"]', prose)) {
+        const href = a.getAttribute('href'), own = noteLink(n.slug);
+        if (a.classList.contains('anchor') || href === own || href.startsWith(own + '?')) continue;
+        const span = document.createElement('span');
+        span.className = 'link-hidden';
+        span.append(...a.childNodes);
+        a.replaceWith(span);
+      }
+    }
     buildToc(prose, n);
     if (n.files.length) showFile(n, 0);
     addRunButtons(prose, noteFiles(n)).catch((e) => console.warn('Runner failed to load', e));
@@ -395,6 +416,10 @@
 
   function noteHTML(n, body) {
     const { repo, branch } = state.site;
+    const share = state.share;
+    const chip = (t, field, label) => (share
+      ? `<span class="chip chip-static${field === 'topics' ? ' chip-topic' : ''}">${esc(label)}</span>`
+      : `<button type="button" class="chip${field === 'topics' ? ' chip-topic' : ''}" data-facet="${field}" data-key="${esc(lc(t))}" data-from-note>${esc(label)}</button>`);
     const siblings = neighbours(n);
     const backlinks = (n.backlinks || []).map((s) => state.bySlug.get(s)).filter(Boolean);
     const edited = n.updated && n.updated !== n.date ? `<span>Edited ${esc(fmt(n.updated))}</span>` : '';
@@ -409,9 +434,10 @@
           <h1>${esc(n.title)}</h1>
           ${n.description ? `<p class="note-desc">${esc(n.description)}</p>` : ''}
           <div class="note-meta">
-            ${n.topics.map((t) => `<button type="button" class="chip chip-topic" data-facet="topics" data-key="${esc(lc(t))}" data-from-note>${esc(t)}</button>`).join('')}
-            ${n.tags.map((t) => `<button type="button" class="chip" data-facet="tags" data-key="${esc(lc(t))}" data-from-note>#${esc(t)}</button>`).join('')}
-            <span class="note-facts"><span>${n.minutes} min read</span>${edited}<a href="#/edit/${encodeURI(n.slug)}">Edit</a></span>
+            ${n.topics.map((t) => chip(t, 'topics', t)).join('')}
+            ${n.tags.map((t) => chip(t, 'tags', '#' + t)).join('')}
+            <span class="note-facts"><span>${n.minutes} min read</span>${edited}${share ? '' : `<a href="#/edit/${encodeURI(n.slug)}">Edit</a>
+              <button type="button" class="linklike" data-action="share" data-slug="${esc(n.slug)}">Share</button>`}</span>
           </div>
         </header>
         <details class="toc" hidden><summary>Contents</summary><nav aria-label="Contents"></nav></details>
@@ -419,7 +445,7 @@
           <div class="prose">${body}</div>
           ${n.files.length ? filesHTML(n) : ''}
         </div>
-        <footer class="note-foot">
+        ${share ? '' : `<footer class="note-foot">
           ${backlinks.length ? `<section class="backlinks"><h2>Linked from</h2><ul>${backlinks.map((b) => `<li><a href="#/note/${encodeURI(b.slug)}">${esc(b.title)}</a></li>`).join('')}</ul></section>` : ''}
           ${siblings.prev || siblings.next ? `<nav class="pager" aria-label="${siblings.topic ? `More in ${esc(siblings.topic)}` : 'More notes'}">
             ${siblings.prev ? `<a class="pager-prev" href="#/note/${encodeURI(siblings.prev.slug)}"><span>Earlier${siblings.topic ? ` in ${esc(siblings.topic)}` : ''}</span>${esc(siblings.prev.title)}</a>` : '<span></span>'}
@@ -429,7 +455,7 @@
             <a href="https://github.com/${esc(repo)}/edit/${esc(branch)}/${esc(n.path)}" target="_blank" rel="noopener">Edit on GitHub</a>
             <a href="https://github.com/${esc(repo)}/commits/${esc(branch)}/${esc(n.path)}" target="_blank" rel="noopener">Change history</a>
             <a href="${esc(n.path)}" target="_blank" rel="noopener">Raw Markdown</a></p>` : `<p class="source-links"><a href="${esc(n.path)}" target="_blank" rel="noopener">Raw Markdown</a></p>`}
-        </footer>
+        </footer>`}
       </article>`;
   }
 
@@ -608,7 +634,7 @@
       h.id = 'h-' + id;
       const a = document.createElement('a');
       a.className = 'anchor';
-      a.href = `#/note/${encodeURI(n.slug)}?h=${encodeURIComponent(id)}`;
+      a.href = n.slug === '__draft' ? `#/note/__draft?h=${encodeURIComponent(id)}` : noteLink(n.slug, id);
       a.setAttribute('aria-label', `Link to “${h.textContent}”`);
       a.textContent = '#';
       h.append(a);
@@ -630,7 +656,7 @@
       if (a.classList.contains('anchor')) continue;
       const raw = a.getAttribute('href');
       if (raw.startsWith('#/')) continue;
-      if (raw.startsWith('#')) { a.href = `#/note/${encodeURI(n.slug)}?h=${encodeURIComponent(raw.slice(1))}`; continue; }
+      if (raw.startsWith('#')) { a.href = n.slug === '__draft' ? `#/note/__draft?h=${encodeURIComponent(raw.slice(1))}` : noteLink(n.slug, raw.slice(1)); continue; }
       if (isExternal(raw)) { a.target = '_blank'; a.rel = 'noopener'; continue; }
       const url = resolve(raw);
       const target = byUrl.get(decodeURI(url.pathname));
@@ -693,7 +719,7 @@
     const min = Math.min(...heads.map((h) => +h.tagName[1]));
     $('nav', toc).innerHTML = `<ul>${heads.map((h) => {
       const text = h.textContent.replace(/#$/, '').trim();
-      return `<li class="toc-l${+h.tagName[1] - min}"><a href="#/note/${encodeURI(n.slug)}?h=${encodeURIComponent(h.id.slice(2))}" data-target="${h.id}">${esc(text)}</a></li>`;
+      return `<li class="toc-l${+h.tagName[1] - min}"><a href="${noteLink(n.slug, h.id.slice(2))}" data-target="${h.id}">${esc(text)}</a></li>`;
     }).join('')}</ul>`;
     toc.hidden = false;
     syncTocOpen();
@@ -817,6 +843,14 @@
     const action = t.closest('[data-action]')?.dataset.action;
     if (action === 'clear') { clearAll(); refresh(); return; }
     if (action === 'more-tags') { state.showAllTags = !state.showAllTags; renderFilters(); return; }
+    if (action === 'share') {
+      const btn = t.closest('[data-action]');
+      const url = pageBase + '#/share/' + encodeURI(btn.dataset.slug);
+      const done = (msg) => { btn.textContent = msg; setTimeout(() => { btn.textContent = 'Share'; }, 2500); };
+      if (navigator.clipboard) navigator.clipboard.writeText(url).then(() => done('Link copied'), () => prompt('Copy this link:', url));
+      else prompt('Copy this link:', url);
+      return;
+    }
     if (action === 'random') {
       const pool = filtered();
       const pick = (pool.length ? pool : state.notes)[Math.floor(Math.random() * (pool.length || state.notes.length))];
@@ -841,7 +875,7 @@
 
   function onKey(e) {
     const typing = /^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement?.tagName) || document.activeElement?.isContentEditable;
-    if (e.key === '/' && !typing && !e.metaKey && !e.ctrlKey) {
+    if (e.key === '/' && !typing && !e.metaKey && !e.ctrlKey && !state.share) {
       e.preventDefault();
       if (matchMedia('(max-width: 899px)').matches) setDrawer(true);
       searchEl.focus(); searchEl.select();

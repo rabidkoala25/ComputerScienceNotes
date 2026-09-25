@@ -63,6 +63,12 @@ Open the repository folder in VS Code and the included `.vscode/` settings:
 - save pasted images to `assets/<note name>/` so two notes never fight over `image.png`,
 - add snippets: type `note` for the header, `callout`, `qa` for a hidden-answer question, `wiki` for a link.
 
+## Share a single note
+
+On any note, select **Share** to copy a link like `https://<you>.github.io/<repo>/#/share/<note>`. That link shows only the note: no sidebar, search, edit buttons or links to your other notes (links to other notes appear as plain text). Its files and Run buttons still work.
+
+This hides navigation; it isn't a password. The site is public, so someone who edits the link can still reach the rest.
+
 ## Preview locally
 
 ```

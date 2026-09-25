@@ -1,0 +1,33 @@
+{
+  "New note header": {
+    "scope": "markdown",
+    "prefix": "note",
+    "description": "Front matter for a new note",
+    "body": [
+      "---",
+      "title: ${1:$TM_FILENAME_BASE}",
+      "date: $CURRENT_YEAR-$CURRENT_MONTH-$CURRENT_DATE",
+      "topics: [${2}]",
+      "tags: [${3}]",
+      "description: ${4}",
+      "---",
+      "",
+      "$0"
+    ]
+  },
+  "Callout": {
+    "scope": "markdown",
+    "prefix": "callout",
+    "body": ["> [!${1|NOTE,TIP,IMPORTANT,WARNING,CAUTION,DEFINITION,EXAMPLE,SUMMARY|}] ${2}", "> $0"]
+  },
+  "Self-test question (answer hidden)": {
+    "scope": "markdown",
+    "prefix": "qa",
+    "body": ["> [!QUESTION]- ${1:Question}", "> ${0:Answer}"]
+  },
+  "Link to another note": {
+    "scope": "markdown",
+    "prefix": "wiki",
+    "body": ["[[${1:Note title}]]$0"]
+  }
+}

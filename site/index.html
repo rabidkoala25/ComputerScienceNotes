@@ -12,6 +12,7 @@
       try { t = localStorage.getItem('notes-theme'); } catch (e) {}
       if (!t) t = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
       document.documentElement.dataset.theme = t;
+      if (location.hash.indexOf('#/share/') === 0) document.documentElement.classList.add('share-mode');
     })();
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com">

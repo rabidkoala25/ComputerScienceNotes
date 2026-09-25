@@ -1,0 +1,15 @@
+{
+  "[markdown]": {
+    "editor.quickSuggestions": { "other": "on", "comments": "off", "strings": "off" },
+    "editor.wordBasedSuggestions": "matchingDocuments",
+    "editor.snippetSuggestions": "top",
+    "editor.wordWrap": "on"
+  },
+  // Pasted or dropped images go into assets/<note name>/ next to the note,
+  // so "image.png" from one note never overwrites another note's image.
+  "markdown.copyFiles.destination": {
+    "**/*.md": "assets/${documentBaseName}/"
+  },
+  "markdown.updateLinksOnFileMove.enabled": "prompt",
+  "markdown.validate.enabled": true
+}

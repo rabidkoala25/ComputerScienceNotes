@@ -373,6 +373,16 @@ details.callout:not([open]) > summary { margin-bottom: .5rem; }
 .lightbox-cap { margin: 0; color: var(--ink-2); font-size: .9rem; }
 .scrim { display: none; }
 
+/* ---------- share view: one note, no navigation ---------- */
+html.share-mode .sidebar, html.share-mode .topbar, html.share-mode .scrim, html.share-mode .skip { display: none !important; }
+html.share-mode .app { grid-template-columns: minmax(0, 1fr); }
+html.share-mode .note { margin: 0 auto; }
+.chip-static { cursor: default; }
+.chip-static:hover { border-color: var(--rule); }
+.chip-topic.chip-static:hover { border-color: var(--accent); }
+.link-hidden { text-decoration: underline dotted; text-decoration-color: var(--ink-2); }
+.note-facts .linklike { font-size: inherit; }
+
 /* ---------- files and running code ---------- */
 .item-files { color: var(--accent); }
 .tl-file { font-size: .72rem; padding: 0 .3rem; border-radius: 3px; background: var(--accent-soft); color: var(--ink); }
