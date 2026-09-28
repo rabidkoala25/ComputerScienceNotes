@@ -1,7 +1,7 @@
 ---
 title: 1D Lists
 date: 2026-09-25
-topics: [SL]
+topics: [HW]
 tags: [data, dynamic, arrays]
 ---
 
@@ -9,15 +9,14 @@ tags: [data, dynamic, arrays]
 
 ## Programming exercises
 
-### first_last.py
+### first last
 
 ```python
 nums = [1975, 1994, 1998, 2004, 2002, 1975]
 print(nums[0] == nums[len(nums) - 1])
 ```
 
-### sum_average_odd.py
-
+### sum-average-odd
 ```python
 size = int(input("Enter size: "))
 nums = [0] * size
@@ -39,7 +38,7 @@ print("Average:", total / size)
 print("Odd numbers:", oddCount)
 ```
 
-### reverse_names.py
+### reverse
 
 ```python
 names = ["Elon Musk", "Jeff Bezos", "Mark Zuckerberg", "Bill Gates", "Larry Page"]
@@ -60,7 +59,7 @@ print(reversedNames)
 
 ## List operations
 
-### list_operations.py
+
 
 ```python
 # number of items
