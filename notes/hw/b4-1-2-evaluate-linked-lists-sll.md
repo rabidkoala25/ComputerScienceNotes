@@ -25,3 +25,120 @@ With no value in the list, Current would eventually reach NULL and the search wo
 An advantage of a singly linked list is that its size is dynamic. It grows and shrinks. Inserting or deleting at a known position only means changing a pointer or two, as in Questions 3 and 5. An array would have to shift every later element, and might need resizing.
 
 A disadvantage is that there is no random access. To reach the nth element you must traverse from Head whereas an array can index directly. Each node also uses extra memory to store its next pointer.
+
+## coding activity
+
+Create the `LinkedList` and `ListNode` classes, plan a test table, then run the tests.
+
+## Code
+
+```python
+class ListNode:
+    def __init__(self, data=0):
+        self.data = data
+        self.next = None
+
+
+class LinkedList:
+    def __init__(self):
+        self.head = None
+
+    def print_list(self):
+        current = self.head
+        while current != None:
+            print(current.data, end=" -> ")
+            current = current.next
+        print("None")
+
+    def insert_at_beginning(self, data):
+        new_node = ListNode(data)
+        new_node.next = self.head
+        self.head = new_node
+
+    def insert_after_value(self, target_value, data):
+        current = self.head
+        while current is not None:
+            if current.data == target_value:
+                new_node = ListNode(data)
+                new_node.next = current.next
+                current.next = new_node
+                return
+            current = current.next
+        print(f"Node with data {target_value} not found.")
+
+    def insert_at_end(self, data):
+        new_node = ListNode(data)
+        if self.head is None:
+            self.head = new_node
+            return
+        current = self.head
+        while current.next != None:
+            current = current.next
+        current.next = new_node
+
+    def delete_node(self, data):
+        current = self.head
+        prev = None
+        if current != None and current.data == data:
+            self.head = current.next
+            return
+        while current != None and current.data != data:
+            prev = current
+            current = current.next
+        if current == None:
+            print(f"Node with data {data} not found.")
+            return
+        prev.next = current.next
+
+    def search(self, key):
+        current = self.head
+        while current != None:
+            if current.data == key:
+                return True
+            current = current.next
+        return False
+```
+
+## Tests
+
+```python
+ll = LinkedList()
+
+ll.print_list()                          # 1
+print(ll.search("Yuki"))                 # 2
+ll.delete_node("Yuki")                   # 3
+ll.insert_at_end("Aarav")                # 4
+for name in ["Yuki", "Sofia", "Jamal", "Elena"]:
+    ll.insert_at_end(name)               # 5
+ll.insert_after_value("Sofia", "Nia")    # 6
+ll.insert_after_value("Zara", "Omar")    # 7
+ll.delete_node("Elena")                  # 8
+ll.insert_at_beginning("Liam")           # 9
+ll.delete_node("Liam")                   # 10
+ll.delete_node("Yuki")                   # 11
+ll.delete_node("Zara")                   # 12
+print(ll.search("Sofia"))                # 13
+print(ll.search("Yuki"))                 # 14
+ll.print_list()
+```
+
+## Test table
+
+| # | Test | Expected | Actual |
+|---|------|----------|--------|
+| 1 | Print empty list | None | None |
+| 2 | Search empty list | False | False |
+| 3 | Delete from empty list | not found | not found |
+| 4 | Insert at end, empty list | Aarav -> None | Aarav -> None |
+| 5 | Insert at end x4 | Aarav -> Yuki -> Sofia -> Jamal -> Elena -> None | same |
+| 6 | Insert Nia after Sofia | ... Sofia -> Nia -> Jamal ... | same |
+| 7 | Insert after missing value | not found, list unchanged | same |
+| 8 | Delete tail (Elena) | Aarav -> Yuki -> Sofia -> Nia -> Jamal -> None | same |
+| 9 | Insert Liam at head | Liam -> Aarav -> ... | same |
+| 10 | Delete head (Liam) | Aarav -> Yuki -> ... | same |
+| 11 | Delete middle (Yuki) | Aarav -> Sofia -> Nia -> Jamal -> None | same |
+| 12 | Delete missing value | not found, list unchanged | same |
+| 13 | Search Sofia | True | True |
+| 14 | Search Yuki (deleted) | False | False |
+
+All tests passed.
