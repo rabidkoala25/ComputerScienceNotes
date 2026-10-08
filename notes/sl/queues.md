@@ -1,5 +1,5 @@
 ---
-title: Queues
+title: Queues Coding
 date: 2026-10-05
 topics: [SL]
 tags: [arrays, data, dynamic]
