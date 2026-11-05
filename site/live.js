@@ -11,6 +11,7 @@
   let waitingSnapshot = null;
   let lastImageList = '';
   let errorHandler = () => {};
+  let signedInUser = null;
 
   function loadFirebase() {
     const config = A.state.site.firebase;
@@ -39,13 +40,19 @@
     });
   }
 
+  async function prepare() {
+    const fb = await loadFirebase();
+    signedInUser = await currentUser(fb);
+  }
+
   async function start(onError) {
     errorHandler = onError || (() => {});
-    const fb = await loadFirebase();
-    let user = await currentUser(fb);
-    if (!user) {
-      const result = await fb.auth().signInWithPopup(new fb.auth.GoogleAuthProvider());
-      user = result.user;
+    if (!signedInUser) {
+      if (!window.firebase || !firebase.apps.length) await prepare();
+      if (!signedInUser) {
+        const result = await firebase.auth().signInWithPopup(new firebase.auth.GoogleAuthProvider());
+        signedInUser = result.user;
+      }
     }
     await liveRef().child('on').set(true);
     await liveRef().child('on').onDisconnect().set(false);
@@ -122,5 +129,5 @@
     return `Live failed: ${message}`;
   }
 
-  window.NotesLive = { start, push, stop, watch, explain };
+  window.NotesLive = { prepare, start, push, stop, watch, explain };
 })();

@@ -225,10 +225,18 @@
     button.textContent = live ? 'Stop live' : 'Go live';
   }
 
+  let liveLoading = null;
+  function loadLive() {
+    if (window.NotesLive) return Promise.resolve();
+    liveLoading = liveLoading || A.loadScript('live.js').then(() => NotesLive.prepare());
+    liveLoading.catch(() => { liveLoading = null; });
+    return liveLoading;
+  }
+
   async function toggleLive(button) {
     button.disabled = true;
     try {
-      if (!window.NotesLive) await A.loadScript('live.js');
+      if (!window.NotesLive) await loadLive();
       if (live) {
         live = false;
         showLiveButton();
@@ -393,6 +401,7 @@
     for (const f of d.files) if (f.blob) urls.set(f.name, URL.createObjectURL(f.blob));
     renderFileTabs();
     updateAssetDir();
+    if (A.state.site.firebase) loadLive().catch(() => {});
     updatePreview();
     requestAnimationFrame(() => { cm.refresh(); (d.meta.title ? cm : $('#ed-title', host)).focus(); });
   }

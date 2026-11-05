@@ -385,7 +385,7 @@ html.share-mode .note { margin: 0 auto; }
 
 .live-btn[aria-pressed="true"] { background: var(--c-caution); color: #fff; }
 .live-btn[aria-pressed="true"]::before { content: "● "; }
-.ed-live-status { font-size: .8rem; color: var(--c-caution); }
+.ed-live-status { font-size: .85rem; font-weight: 500; color: var(--c-caution); }
 .live-badge { margin: 0 0 .5rem; font-size: .9rem; color: var(--ink-2); }
 .live-badge.is-on { color: var(--c-caution); font-weight: 600; }
 .live-badge.is-on::before { content: "● "; }
