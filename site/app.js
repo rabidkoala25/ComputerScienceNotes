@@ -98,6 +98,14 @@
     $('#sort').value = state.sort;
     renderFilters();
     renderList();
+    if (state.site.firebase) {
+      try {
+        await loadScript('account.js');
+        NotesAccount.init();
+      } catch (err) {
+        console.warn('Sign-in failed to load', err);
+      }
+    }
     route();
     window.addEventListener('hashchange', route);
   }
@@ -244,6 +252,17 @@
     const toEditor = raw === '/new' || raw.startsWith('/edit/');
     if (state.view === 'editor' && window.NotesEditor) window.NotesEditor.close();
     if (stopWatchingLive) { stopWatchingLive(); stopWatchingLive = null; }
+    if (raw === '/requests') {
+      setShare(false);
+      state.current = null;
+      state.view = 'requests';
+      markCurrent();
+      document.title = `Comment access | ${state.site.title || 'Notes'}`;
+      if (window.NotesAccount) NotesAccount.showRequests(main);
+      else main.innerHTML = '<section class="empty"><h1>Comment access</h1><p>Comments aren’t set up on this site yet.</p></section>';
+      setDrawer(false);
+      return;
+    }
     if (raw === '/live') {
       setShare(true);
       state.current = null;
@@ -892,12 +911,18 @@
     return first;
   }
 
+  const loadedScripts = new Map();
   function loadScript(src) {
-    return new Promise((resolve, reject) => {
-      const s = document.createElement('script');
-      s.src = src; s.onload = resolve; s.onerror = () => reject(new Error(`Couldn't load ${src}`));
-      document.head.append(s);
-    });
+    if (!loadedScripts.has(src)) {
+      const loading = new Promise((resolve, reject) => {
+        const s = document.createElement('script');
+        s.src = src; s.onload = resolve; s.onerror = () => reject(new Error(`Couldn't load ${src}`));
+        document.head.append(s);
+      });
+      loading.catch(() => loadedScripts.delete(src));
+      loadedScripts.set(src, loading);
+    }
+    return loadedScripts.get(src);
   }
 
   async function renderMermaid(prose) {

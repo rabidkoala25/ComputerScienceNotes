@@ -227,7 +227,6 @@
 
   let liveLoading = null;
   function loadLive() {
-    if (window.NotesLive) return Promise.resolve();
     liveLoading = liveLoading || A.loadScript('live.js').then(() => NotesLive.prepare());
     liveLoading.catch(() => { liveLoading = null; });
     return liveLoading;

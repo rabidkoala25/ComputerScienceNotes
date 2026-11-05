@@ -4,7 +4,22 @@
     ".write": false,
     "live": {
       ".read": true,
-      ".write": "auth != null && auth.token.email === 'YOUR-EMAIL@gmail.com' && auth.token.email_verified === true"
+      ".write": "auth != null && auth.token.email === 'jessenel2009@gmail.com' && auth.token.email_verified === true"
+    },
+    "requests": {
+      ".read": "auth != null && auth.token.email === 'jessenel2009@gmail.com' && auth.token.email_verified === true",
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        ".write": "auth != null && (auth.uid === $uid || (auth != null && auth.token.email === 'jessenel2009@gmail.com' && auth.token.email_verified === true))",
+        ".validate": "newData.child('email').val() === auth.token.email || (auth != null && auth.token.email === 'jessenel2009@gmail.com' && auth.token.email_verified === true)"
+      }
+    },
+    "members": {
+      ".read": "auth != null && auth.token.email === 'jessenel2009@gmail.com' && auth.token.email_verified === true",
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        ".write": "auth != null && auth.token.email === 'jessenel2009@gmail.com' && auth.token.email_verified === true"
+      }
     }
   }
 }

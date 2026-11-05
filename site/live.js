@@ -11,7 +11,6 @@
   let waitingSnapshot = null;
   let lastImageList = '';
   let errorHandler = () => {};
-  let signedInUser = null;
 
   function loadFirebase() {
     const config = A.state.site.firebase;
@@ -42,17 +41,14 @@
 
   async function prepare() {
     const fb = await loadFirebase();
-    signedInUser = await currentUser(fb);
+    await currentUser(fb);
   }
 
   async function start(onError) {
     errorHandler = onError || (() => {});
-    if (!signedInUser) {
-      if (!window.firebase || !firebase.apps.length) await prepare();
-      if (!signedInUser) {
-        const result = await firebase.auth().signInWithPopup(new firebase.auth.GoogleAuthProvider());
-        signedInUser = result.user;
-      }
+    if (!window.firebase || !firebase.apps.length) await prepare();
+    if (!firebase.auth().currentUser) {
+      await firebase.auth().signInWithPopup(new firebase.auth.GoogleAuthProvider());
     }
     await liveRef().child('on').set(true);
     await liveRef().child('on').onDisconnect().set(false);
