@@ -243,6 +243,15 @@
     const raw = location.hash.slice(1);
     const toEditor = raw === '/new' || raw.startsWith('/edit/');
     if (state.view === 'editor' && window.NotesEditor) window.NotesEditor.close();
+    if (stopWatchingLive) { stopWatchingLive(); stopWatchingLive = null; }
+    if (raw === '/live') {
+      setShare(true);
+      state.current = null;
+      state.view = 'live';
+      markCurrent();
+      showLive();
+      return;
+    }
     if (toEditor) {
       setShare(false);
       state.current = null;
@@ -272,6 +281,111 @@
       window.scrollTo(0, 0);
     }
     setDrawer(false);
+  }
+
+  let stopWatchingLive = null;
+  let lastLiveText = null;
+  let lastLiveFiles = null;
+
+  async function showLive() {
+    document.title = 'Live notes';
+    lastLiveText = null;
+    lastLiveFiles = null;
+    main.innerHTML = `<article class="note live-view">
+        <header class="note-head">
+          <p class="live-badge" data-live-status>Connecting…</p>
+          <h1 data-live-title></h1>
+        </header>
+        <div class="note-body"><div class="prose"></div><div class="live-files"></div></div>
+      </article>`;
+    window.scrollTo(0, 0);
+    if (!state.site.firebase) {
+      $('[data-live-status]', main).textContent = 'Live notes aren’t set up on this site yet.';
+      return;
+    }
+    try {
+      if (!window.NotesLive) await loadScript('live.js');
+      const stop = await NotesLive.watch(renderLive);
+      if (state.view === 'live') stopWatchingLive = stop;
+      else stop();
+    } catch (err) {
+      $('[data-live-status]', main).textContent = `Couldn’t connect: ${err.message}`;
+    }
+  }
+
+  function renderLive(data) {
+    if (state.view !== 'live') return;
+    const status = $('[data-live-status]', main);
+    if (data.error) { status.textContent = `Couldn’t connect: ${data.error}`; return; }
+    status.textContent = data.on ? 'Live' : 'Not live right now. This page updates by itself when writing starts.';
+    status.classList.toggle('is-on', !!data.on);
+    $('[data-live-title]', main).textContent = data.title || 'Untitled note';
+
+    const images = new Map(Object.values(data.images || {}).map((image) => [image.name, image.data]));
+    const textKey = JSON.stringify([data.md || '', [...images.keys()]]);
+    if (textKey !== lastLiveText) {
+      lastLiveText = textKey;
+      const prose = $('.prose', main);
+      prose.innerHTML = renderMarkdown(data.md || '');
+      enhance(prose, { slug: '__live', path: data.path || 'notes/live.md', title: data.title }, {
+        resolveAsset: (raw) => {
+          let name = raw.split('/').pop();
+          try { name = decodeURIComponent(name); } catch { }
+          return images.get(name) || null;
+        },
+      });
+      $$('.anchor', prose).forEach((anchor) => anchor.remove());
+      for (const link of $$('a[href^="#/"]', prose)) {
+        const span = document.createElement('span');
+        span.className = 'link-hidden';
+        span.append(...link.childNodes);
+        link.replaceWith(span);
+      }
+      renderMermaid(prose).catch(() => {});
+    }
+
+    const files = Object.values(data.files || {});
+    const filesKey = JSON.stringify(files);
+    if (filesKey !== lastLiveFiles) {
+      lastLiveFiles = filesKey;
+      renderLiveFiles(files);
+    }
+  }
+
+  function renderLiveFiles(files) {
+    const box = $('.live-files', main);
+    box.innerHTML = files.length ? '<section class="files"><h2>Files</h2></section>' : '';
+    const section = $('.files', box);
+    for (const file of files) {
+      const panel = document.createElement('div');
+      panel.className = 'file-panel';
+      const heading = document.createElement('h3');
+      heading.className = 'live-file-name';
+      heading.textContent = file.name;
+      const pre = document.createElement('pre');
+      const code = document.createElement('code');
+      code.textContent = file.content || '';
+      const extension = (file.name.match(/\.([^.]+)$/) || [])[1] || '';
+      if (window.hljs && hljs.getLanguage(extension)) {
+        code.className = `language-${extension}`;
+        hljs.highlightElement(code);
+      }
+      pre.append(code);
+      panel.append(heading, pre);
+      section.append(panel);
+      const language = { py: 'python', js: 'javascript' }[extension.toLowerCase()];
+      if (language) {
+        ensureRunner().then(() => {
+          if (!panel.isConnected) return;
+          NotesRunner.mount(panel, {
+            lang: language,
+            getCode: () => file.content || '',
+            getFiles: async () => files.map((other) => ({ name: other.name, content: other.content || '' })),
+            label: `Run ${file.name}`,
+          });
+        });
+      }
+    }
   }
 
   async function openEditor(slug) {

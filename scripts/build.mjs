@@ -268,6 +268,7 @@ const index = {
     title: config.title || 'Notes',
     description: config.description || '',
     notesDir,
+    firebase: config.firebase && config.firebase.apiKey && config.firebase.databaseURL ? config.firebase : null,
     repo,
     branch,
     built: new Date().toISOString(),

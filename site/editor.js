@@ -112,6 +112,7 @@
   }
 
   // ---------- state ----------
+  let live = false;
   let host = null, cm = null, fileCm = null, d = null, previewTimer = null, saveTimer = null, closed = true;
   const urls = new Map(); // file name -> object URL (images and binaries)
 
@@ -190,6 +191,7 @@
   function close() {
     if (closed) return;
     closed = true;
+    if (live) { live = false; NotesLive.stop().catch(() => {}); }
     flushSave();
     clearTimeout(previewTimer);
     for (const u of urls.values()) URL.revokeObjectURL(u);
@@ -201,7 +203,61 @@
 
   // ---------- autosave ----------
   function setStatus(text) { const s = $('.ed-status', host); if (s) s.textContent = text; }
+  function liveSnapshot() {
+    return {
+      title: d.meta.title,
+      path: target().mdPath,
+      md: d.md,
+      files: d.files.filter((f) => f.kind === 'text').map((f) => ({ name: f.name, content: f.content })),
+      images: d.files.filter((f) => f.kind === 'image' && f.blob).map((f) => ({ name: f.name, blob: f.blob })),
+    };
+  }
+
+  function setLiveStatus(text) {
+    const el = $('.ed-live-status', host);
+    if (el) el.textContent = text;
+  }
+
+  function showLiveButton() {
+    const button = $('[data-ed="live"]', host);
+    if (!button) return;
+    button.setAttribute('aria-pressed', String(live));
+    button.textContent = live ? 'Stop live' : 'Go live';
+  }
+
+  async function toggleLive(button) {
+    button.disabled = true;
+    try {
+      if (!window.NotesLive) await A.loadScript('live.js');
+      if (live) {
+        live = false;
+        showLiveButton();
+        await NotesLive.stop();
+        setLiveStatus('Live view stopped');
+      } else {
+        await NotesLive.start((err) => setLiveStatus(NotesLive.explain(err)));
+        live = true;
+        showLiveButton();
+        NotesLive.push(liveSnapshot());
+        const link = location.href.split('#')[0] + '#/live';
+        try {
+          await navigator.clipboard.writeText(link);
+          setLiveStatus('Live. Link copied');
+        } catch {
+          setLiveStatus(`Live at ${link}`);
+        }
+      }
+    } catch (err) {
+      live = false;
+      showLiveButton();
+      setLiveStatus(window.NotesLive ? NotesLive.explain(err) : `Live failed: ${err.message}`);
+    } finally {
+      button.disabled = false;
+    }
+  }
+
   function scheduleSave() {
+    if (live) NotesLive.push(liveSnapshot());
     setStatus('Saving draft…');
     clearTimeout(saveTimer);
     saveTimer = setTimeout(flushSave, 500);
@@ -244,6 +300,8 @@
             <div class="seg" role="group" aria-label="Layout">
               ${['write', 'split', 'preview'].map((v) => `<button type="button" data-view="${v}" aria-pressed="${v === view}">${v[0].toUpperCase() + v.slice(1)}</button>`).join('')}
             </div>
+            ${A.state.site.firebase ? `<span class="ed-live-status" aria-live="polite"></span>
+            <button type="button" class="btn btn-quiet live-btn" data-ed="live" aria-pressed="${live}">${live ? 'Stop live' : 'Go live'}</button>` : ''}
             <button type="button" class="btn" data-ed="finish">Finish note</button>
           </div>
         </header>
@@ -696,7 +754,8 @@
     if (tab) { d.activeFile = tab.dataset.edfile; renderFileTabs(); return; }
     const act = t.closest('[data-ed]')?.dataset.ed;
     const name = t.closest('[data-name]')?.dataset.name;
-    if (act === 'finish') openFinish();
+    if (act === 'live') toggleLive(t.closest('[data-ed]'));
+    else if (act === 'finish') openFinish();
     else if (act === 'discard') discard();
     else if (act === 'new-file') { const f = $('.ed-newfile', host); f.hidden = false; $('#ed-newfile-name', host).value = d.files.some((x) => x.name === 'main.py') ? '' : 'main.py'; $('#ed-newfile-name', host).focus(); }
     else if (act === 'cancel-file') $('.ed-newfile', host).hidden = true;

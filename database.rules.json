@@ -1,0 +1,10 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+    "live": {
+      ".read": true,
+      ".write": "auth != null && auth.token.email === 'YOUR-EMAIL@gmail.com' && auth.token.email_verified === true"
+    }
+  }
+}

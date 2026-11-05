@@ -383,6 +383,14 @@ html.share-mode .note { margin: 0 auto; }
 .link-hidden { text-decoration: underline dotted; text-decoration-color: var(--ink-2); }
 .note-facts .linklike { font-size: inherit; }
 
+.live-btn[aria-pressed="true"] { background: var(--c-caution); color: #fff; }
+.live-btn[aria-pressed="true"]::before { content: "● "; }
+.ed-live-status { font-size: .8rem; color: var(--c-caution); }
+.live-badge { margin: 0 0 .5rem; font-size: .9rem; color: var(--ink-2); }
+.live-badge.is-on { color: var(--c-caution); font-weight: 600; }
+.live-badge.is-on::before { content: "● "; }
+.live-file-name { font: 500 .9rem var(--font-code); margin: 1.25rem 0 .4rem; }
+
 /* ---------- files and running code ---------- */
 .item-files { color: var(--accent); }
 .tl-file { font-size: .72rem; padding: 0 .3rem; border-radius: 3px; background: var(--accent-soft); color: var(--ink); }
