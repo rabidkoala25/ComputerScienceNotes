@@ -5,7 +5,7 @@
   "firebase": {
     "apiKey": "AIzaSyCCn0GFldvEeKNRY8RmdojvS8Bt2Gt3gY0",
     "authDomain": "computer-science-note-site.firebaseapp.com",
-    "databaseURL": "",
+    "databaseURL": "https://computer-science-note-site-default-rtdb.europe-west1.firebasedatabase.app",
     "projectId": "computer-science-note-site",
     "appId": "1:836962458440:web:8f0c0164b3d0a0c942b17d"
   }
