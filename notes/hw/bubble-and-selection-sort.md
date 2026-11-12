@@ -113,3 +113,53 @@ print(arr)
 | 2 | 2 | 3 | 5 < 4 No | 2 | | |
 | 2 | | 4 | 8 < 4 No | 2 | No change (swaps with itself) | [1, 2, 4, 5, 8] |
 | 3 | 3 | 4 | 8 < 5 No | 3 | No change (swaps with itself) | [1, 2, 4, 5, 8] |
+
+## Task 5: both sorts in Python
+
+```python
+def bubble_sort(arr):
+    n = len(arr)
+    for i in range(n - 1):
+        for j in range(n - i - 1):
+            if arr[j] > arr[j + 1]:
+                arr[j], arr[j + 1] = arr[j + 1], arr[j]
+        print("Pass", i + 1, ":", arr)
+    return arr
+
+
+def selection_sort(arr):
+    n = len(arr)
+    for i in range(n - 1):
+        min_index = i
+        for j in range(i + 1, n):
+            if arr[j] < arr[min_index]:
+                min_index = j
+        arr[i], arr[min_index] = arr[min_index], arr[i]
+        print("Pass", i + 1, ":", arr)
+    return arr
+
+
+print("Bubble sort")
+print(bubble_sort([29, 10, 14, 37, 13]))
+print()
+print("Selection sort")
+print(selection_sort([29, 10, 14, 37, 13]))
+```
+
+Output:
+
+```
+Bubble sort
+Pass 1 : [10, 14, 29, 13, 37]
+Pass 2 : [10, 14, 13, 29, 37]
+Pass 3 : [10, 13, 14, 29, 37]
+Pass 4 : [10, 13, 14, 29, 37]
+[10, 13, 14, 29, 37]
+
+Selection sort
+Pass 1 : [10, 29, 14, 37, 13]
+Pass 2 : [10, 13, 14, 37, 29]
+Pass 3 : [10, 13, 14, 37, 29]
+Pass 4 : [10, 13, 14, 29, 37]
+[10, 13, 14, 29, 37]
+```
