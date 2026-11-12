@@ -330,6 +330,7 @@
             <option value="table">Table</option>
             <option value="mathblock">Maths block</option>
             <option value="pycell">Python code block</option>
+            <option value="sqlcell">SQL code block</option>
             <option value="mermaid">Diagram (Mermaid)</option>
             <option value="hr">Divider</option>
           </select>
@@ -556,6 +557,7 @@
       table: ['| Column 1 | Column 2 |\n|----------|----------|\n|          |          |', 'Column 1'],
       mathblock: ['$$\n\n$$', null, [3, 3]],
       pycell: ['```python\nprint("hello")\n```', 'print("hello")'],
+      sqlcell: ['```sql\nCREATE TABLE students (id INTEGER PRIMARY KEY, name TEXT, grade INTEGER);\nINSERT INTO students (name, grade) VALUES (\'Ada\', 7), (\'Alan\', 6);\nSELECT * FROM students;\n```', 'SELECT * FROM students;'],
       mermaid: ['```mermaid\nflowchart LR\n  A --> B\n```', 'A --> B'],
       hr: ['---', null],
     };
@@ -696,7 +698,7 @@
     fileCm.on('change', () => { f.content = fileCm.getValue(); scheduleSave(); });
     let runner = null;
     const lang = EXT_LANG[extOf(f.name)];
-    if (/^(python|javascript)$/.test(lang)) {
+    if (/^(python|javascript|sql)$/.test(lang)) {
       A.ensureRunner().then(() => {
         if (!body.isConnected || d.activeFile !== f.name) return;
         runner = NotesRunner.mount(body, { lang, getCode: () => f.content, getFiles: draftFiles, label: `Run ${f.name.split('/').pop()}` });

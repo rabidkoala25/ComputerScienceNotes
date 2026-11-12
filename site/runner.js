@@ -3,7 +3,12 @@
   'use strict';
 
   const PYODIDE = 'https://cdn.jsdelivr.net/pyodide/v0.26.2/full/';
-  const RUNNABLE = { python: 'python', py: 'python', python3: 'python', javascript: 'javascript', js: 'javascript' };
+  const SQLJS = 'https://cdn.jsdelivr.net/npm/sql.js@1.10.3/dist/';
+  const MAX_ROWS = 500;
+  const RUNNABLE = {
+    python: 'python', py: 'python', python3: 'python', javascript: 'javascript', js: 'javascript',
+    sql: 'sql', sqlite: 'sql', mysql: 'sql', postgresql: 'sql',
+  };
   const canRun = (lang) => !!RUNNABLE[String(lang || '').toLowerCase()];
 
   // ---------- Python ----------
@@ -78,6 +83,82 @@ def _notes_figures():
       postMessage({ type: 'done' });
     };`;
 
+  const SQL_WORKER = `
+    importScripts('${SQLJS}sql-wasm.js');
+    let SQL, db;
+    const ready = initSqlJs({ locateFile: (file) => '${SQLJS}' + file }).then((loaded) => {
+      SQL = loaded;
+      db = new SQL.Database();
+    });
+    const show = (value) => value instanceof Uint8Array ? '[' + value.length + ' bytes]' : value;
+    self.onmessage = async (e) => {
+      try { await ready; } catch (err) {
+        postMessage({ type: 'error', text: "SQL didn't load: " + err });
+        postMessage({ type: 'done' });
+        return;
+      }
+      if (e.data.reset) {
+        db.close();
+        db = new SQL.Database();
+        postMessage({ type: 'stdout', text: 'Database reset. All tables are gone.' });
+        postMessage({ type: 'done' });
+        return;
+      }
+      try {
+        const results = db.exec(e.data.code);
+        const changed = db.getRowsModified();
+        if (!results.length) postMessage({ type: 'stdout', text: changed ? 'Done. ' + changed + (changed === 1 ? ' row' : ' rows') + ' changed.' : 'Done.' });
+        for (const result of results) {
+          postMessage({
+            type: 'table',
+            columns: result.columns,
+            rows: result.values.slice(0, ${MAX_ROWS}).map((row) => row.map(show)),
+            total: result.values.length,
+          });
+        }
+      } catch (err) {
+        postMessage({ type: 'error', text: String(err && err.message || err) });
+      }
+      postMessage({ type: 'done' });
+    };`;
+
+  let sqlWorker = null;
+  let sqlPage = null;
+  function getSqlWorker() {
+    const page = location.pathname + location.hash.split('?')[0];
+    if (sqlWorker && sqlPage !== page) { sqlWorker.terminate(); sqlWorker = null; }
+    if (!sqlWorker) {
+      sqlWorker = new Worker(URL.createObjectURL(new Blob([SQL_WORKER], { type: 'text/javascript' })));
+      sqlPage = page;
+    }
+    return sqlWorker;
+  }
+
+  function runSql(message, onEvent) {
+    const worker = getSqlWorker();
+    let finished = false;
+    worker.onmessage = (e) => {
+      onEvent(e.data);
+      if (e.data.type === 'done') finished = true;
+    };
+    worker.onerror = (e) => {
+      onEvent({ type: 'error', text: e.message });
+      onEvent({ type: 'done' });
+      finished = true;
+    };
+    worker.postMessage(message);
+    return {
+      stop() {
+        if (finished) return;
+        worker.terminate();
+        sqlWorker = null;
+        onEvent({ type: 'stderr', text: 'Stopped. The database was reset, so run the blocks that create your tables again.' });
+        onEvent({ type: 'done' });
+        finished = true;
+      },
+    };
+  }
+
   let pyWorker = null;
   let pyLoaded = false;
   function getPyWorker() {
@@ -106,6 +187,8 @@ def _notes_figures():
   // files: [{ name, content }] written next to the code (Python can import or open them)
   function run(lang, code, files, onEvent) {
     const kind = RUNNABLE[String(lang).toLowerCase()];
+
+    if (kind === 'sql') return runSql({ code }, onEvent);
     let worker, finished = false;
     const finish = () => { finished = true; };
 
@@ -143,7 +226,7 @@ def _notes_figures():
       };
     }
 
-    onEvent({ type: 'error', text: `Running ${lang} isn't supported here. Python and JavaScript can run in the browser.` });
+    onEvent({ type: 'error', text: `Running ${lang} isn't supported here. Python, JavaScript and SQL can run in the browser.` });
     onEvent({ type: 'done' });
     return { stop() {} };
   }
@@ -153,7 +236,8 @@ def _notes_figures():
   function mount(host, { lang, getCode, getFiles = async () => [], label = 'Run' }) {
     const bar = document.createElement('div');
     bar.className = 'run-bar';
-    bar.innerHTML = `<button type="button" class="run-btn">${label}</button><button type="button" class="run-stop" hidden>Stop</button><span class="run-status" aria-live="polite"></span>`;
+    const isSql = RUNNABLE[String(lang).toLowerCase()] === 'sql';
+    bar.innerHTML = `<button type="button" class="run-btn">${label}</button><button type="button" class="run-stop" hidden>Stop</button>${isSql ? '<button type="button" class="linklike run-reset">Reset database</button>' : ''}<span class="run-status" aria-live="polite"></span>`;
     const out = document.createElement('div');
     out.className = 'run-out';
     out.hidden = true;
@@ -186,6 +270,7 @@ def _notes_figures():
         else if (ev.type === 'result') line('run-text run-result', ev.text);
         else if (ev.type === 'error') line('run-err', ev.text);
         else if (ev.type === 'status') status.textContent = ev.text || 'Running…';
+        else if (ev.type === 'table') out.append(tableElement(ev));
         else if (ev.type === 'image') { const img = document.createElement('img'); img.src = ev.src; img.alt = 'Figure'; img.className = 'run-fig'; out.append(img); }
         else if (ev.type === 'done') {
           job = null;
@@ -197,8 +282,44 @@ def _notes_figures():
       });
     }
     btn.addEventListener('click', start);
+    bar.querySelector('.run-reset')?.addEventListener('click', () => {
+      if (job) return;
+      out.hidden = false;
+      out.innerHTML = '';
+      runSql({ reset: true }, (ev) => {
+        if (ev.type === 'stdout') line('run-text run-empty', ev.text);
+        else if (ev.type === 'error') line('run-err', ev.text);
+      });
+    });
     stopBtn.addEventListener('click', () => job && job.stop());
     return { run: start };
+  }
+
+  function tableElement({ columns, rows, total }) {
+    const wrap = document.createElement('div');
+    wrap.className = 'run-table-wrap';
+    const table = document.createElement('table');
+    table.className = 'run-table';
+    const headRow = table.createTHead().insertRow();
+    for (const column of columns) {
+      const th = document.createElement('th');
+      th.textContent = column;
+      headRow.append(th);
+    }
+    const body = table.createTBody();
+    for (const row of rows) {
+      const tr = body.insertRow();
+      for (const value of row) {
+        const td = tr.insertCell();
+        if (value === null) { td.textContent = 'NULL'; td.className = 'run-null'; }
+        else td.textContent = value;
+      }
+    }
+    const caption = document.createElement('p');
+    caption.className = 'run-table-caption';
+    caption.textContent = rows.length < total ? `Showing ${rows.length} of ${total} rows` : `${total} ${total === 1 ? 'row' : 'rows'}`;
+    wrap.append(table, caption);
+    return wrap;
   }
 
   window.NotesRunner = { canRun, run, mount };

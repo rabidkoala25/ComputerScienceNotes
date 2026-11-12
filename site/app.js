@@ -392,7 +392,7 @@
       pre.append(code);
       panel.append(heading, pre);
       section.append(panel);
-      const language = { py: 'python', js: 'javascript' }[extension.toLowerCase()];
+      const language = { py: 'python', js: 'javascript', sql: 'sql' }[extension.toLowerCase()];
       if (language) {
         ensureRunner().then(() => {
           if (!panel.isConnected) return;
@@ -649,7 +649,7 @@
     }
   }
 
-  const canRunLang = (lang) => /^(python|py|python3|javascript|js)$/i.test(lang || '');
+  const canRunLang = (lang) => /^(python|py|python3|javascript|js|sql|sqlite|mysql|postgresql)$/i.test(lang || '');
   let runnerLoading = null;
   function ensureRunner() {
     if (window.NotesRunner) return Promise.resolve();

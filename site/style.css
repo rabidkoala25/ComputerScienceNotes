@@ -456,6 +456,13 @@ html.share-mode .note { margin: 0 auto; }
 .run-out .run-err { color: var(--c-caution); }
 .run-out .run-result { color: var(--ink-2); }
 .run-out .run-empty { color: var(--ink-2); font-style: italic; }
+.run-reset { font-size: .8rem; }
+.run-table-wrap { overflow-x: auto; margin: .25rem 0 .5rem; }
+.run-table { border-collapse: collapse; font: 400 .82rem/1.45 var(--font-code); background: var(--paper); }
+.run-table th, .run-table td { border: 1px solid var(--rule); padding: .25rem .6rem; text-align: left; vertical-align: top; white-space: pre-wrap; }
+.run-table th { background: var(--panel); font-weight: 600; }
+.run-null { color: var(--ink-2); font-style: italic; }
+.run-table-caption { margin: .3rem 0 0; font: 400 .75rem var(--font-ui); color: var(--ink-2); }
 .run-fig { display: block; max-width: 100%; margin: .5rem 0; border-radius: 4px; background: #fff; }
 
 /* ---------- editor ---------- */
