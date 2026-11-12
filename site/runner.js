@@ -83,44 +83,216 @@ def _notes_figures():
       postMessage({ type: 'done' });
     };`;
 
-  const SQL_WORKER = `
-    importScripts('${SQLJS}sql-wasm.js');
-    let SQL, db;
-    const ready = initSqlJs({ locateFile: (file) => '${SQLJS}' + file }).then((loaded) => {
+  function sqlWorkerMain() {
+    let SQL;
+    let db;
+    const standIns = new Set();
+    const placeholders = new Set();
+    let touched = [];
+    const INSERT = /^\s*INSERT\s+(?:OR\s+\w+\s+)?INTO\s+["`[]?(\w+)["`\]]?\s*(?:\(([^)]*)\))?\s*VALUES\s*\(/i;
+
+    const ready = initSqlJs({ locateFile: (file) => SQLJS_BASE + file }).then((loaded) => {
       SQL = loaded;
       db = new SQL.Database();
     });
-    const show = (value) => value instanceof Uint8Array ? '[' + value.length + ' bytes]' : value;
+
+    const quote = (name) => '"' + String(name).replace(/"/g, '""') + '"';
+    const key = (name) => String(name).toLowerCase();
+    const show = (value) => (value instanceof Uint8Array ? '[' + value.length + ' bytes]' : value);
+    const stripComments = (text) => text.replace(/^(?:\s+|--[^\n]*(?:\n|$)|\/\*[\s\S]*?\*\/)+/, '');
+
+    function totalChanges() {
+      return db.exec('SELECT total_changes()')[0].values[0][0];
+    }
+
+    function columnsOf(table) {
+      const result = db.exec('PRAGMA table_info(' + quote(table) + ')');
+      return result.length ? result[0].values.map((row) => row[1]) : [];
+    }
+
+    function countValues(text) {
+      let depth = 0;
+      let count = 1;
+      let openQuote = null;
+      for (const character of text) {
+        if (openQuote) {
+          if (character === openQuote) openQuote = null;
+        } else if (character === "'" || character === '"') {
+          openQuote = character;
+        } else if (character === '(') {
+          depth++;
+        } else if (character === ')') {
+          if (depth === 0) return count;
+          depth--;
+        } else if (character === ',' && depth === 0) {
+          count++;
+        }
+      }
+      return count;
+    }
+
+    function remember(table) {
+      if (!touched.some((name) => key(name) === key(table))) touched.push(table);
+    }
+
+    function makeStandIn(table, statement) {
+      const insert = statement.match(INSERT);
+      let columns = ['id'];
+      let isPlaceholder = true;
+      if (insert && key(insert[1]) === key(table)) {
+        isPlaceholder = false;
+        if (insert[2]) {
+          columns = insert[2].split(',').map((column) => column.trim().replace(/^["`[]|["`\]]$/g, ''));
+        } else {
+          const count = countValues(statement.slice(insert[0].length));
+          columns = Array.from({ length: count }, (unused, index) => 'column' + (index + 1));
+        }
+      }
+      db.exec('CREATE TABLE ' + quote(table) + ' (' + columns.map(quote).join(', ') + ')');
+      standIns.add(key(table));
+      if (isPlaceholder) placeholders.add(key(table));
+      remember(table);
+    }
+
+    function addColumn(table, column, keepPlaceholder) {
+      db.exec('ALTER TABLE ' + quote(table) + ' ADD COLUMN ' + quote(column));
+      if (placeholders.has(key(table))) {
+        if (!keepPlaceholder) db.exec('ALTER TABLE ' + quote(table) + ' DROP COLUMN "id"');
+        placeholders.delete(key(table));
+      }
+      remember(table);
+    }
+
+    function tablesIn(statement) {
+      const found = [];
+      const pattern = /\b(?:FROM|JOIN|UPDATE|INTO)\s+["`[]?(\w+)["`\]]?(?:\s+(?:AS\s+)?(\w+))?/gi;
+      for (const match of statement.matchAll(pattern)) found.push({ table: match[1], alias: match[2] });
+      return found;
+    }
+
+    function tryToFix(message, statement) {
+      let match = message.match(/no such table: (?:main\.)?(\w+)/);
+      if (match) {
+        makeStandIn(match[1], statement);
+        return true;
+      }
+      match = message.match(/table (\w+) has (\d+) columns but (\d+) values were supplied/);
+      if (match && standIns.has(key(match[1])) && +match[3] > +match[2]) {
+        for (let number = +match[2] + 1; number <= +match[3]; number++) addColumn(match[1], 'column' + number, true);
+        return true;
+      }
+      match = message.match(/no such column: (?:(\w+)\.)?(\w+)/);
+      if (match) {
+        const candidates = tablesIn(statement).filter((found) => standIns.has(key(found.table)));
+        const owner = match[1]
+          ? candidates.find((found) => key(found.table) === key(match[1]) || (found.alias && key(found.alias) === key(match[1])))
+          : candidates[0];
+        if (owner) {
+          addColumn(owner.table, match[2], false);
+          return true;
+        }
+      }
+      match = message.match(/table "?(\w+)"? already exists/);
+      if (match && standIns.has(key(match[1]))) {
+        db.exec('DROP TABLE ' + quote(match[1]));
+        standIns.delete(key(match[1]));
+        placeholders.delete(key(match[1]));
+        touched = touched.filter((name) => key(name) !== key(match[1]));
+        return true;
+      }
+      return false;
+    }
+
+    function run(code) {
+      touched = [];
+      const output = [];
+      const changesBefore = totalChanges();
+      let remaining = code;
+      let showedTable = false;
+      let failed = false;
+      let fixes = 0;
+      while (stripComments(remaining).trim()) {
+        let iterator;
+        let statement;
+        try {
+          iterator = db.iterateStatements(remaining);
+          const next = iterator.next();
+          if (next.done) break;
+          statement = next.value;
+        } catch (err) {
+          const message = String((err && err.message) || err);
+          let fixed = false;
+          if (fixes < 50) {
+            try { fixed = tryToFix(message, stripComments(remaining)); } catch (fixError) { fixed = false; }
+          }
+          if (fixed) {
+            fixes++;
+            continue;
+          }
+          output.push({ type: 'error', text: message });
+          failed = true;
+          break;
+        }
+        try {
+          const columns = statement.getColumnNames();
+          const rows = [];
+          let total = 0;
+          while (statement.step()) {
+            total++;
+            if (rows.length < MAX_ROWS) rows.push(statement.get().map(show));
+          }
+          if (columns.length) {
+            output.push({ type: 'table', columns, rows, total });
+            showedTable = true;
+          }
+          remaining = iterator.getRemainingSQL();
+        } catch (err) {
+          output.push({ type: 'error', text: String((err && err.message) || err) });
+          failed = true;
+          break;
+        } finally {
+          statement.free();
+        }
+      }
+      for (const table of touched) {
+        if (!standIns.has(key(table))) continue;
+        postMessage({
+          type: 'note',
+          text: table + ' didn’t exist, so an empty stand-in table was made for it: ' + table + ' (' + columnsOf(table).join(', ') + ').',
+        });
+      }
+      for (const message of output) postMessage(message);
+      if (!failed && !showedTable) {
+        const changed = totalChanges() - changesBefore;
+        postMessage({ type: 'stdout', text: changed ? 'Done. ' + changed + (changed === 1 ? ' row' : ' rows') + ' changed.' : 'Done.' });
+      }
+    }
+
     self.onmessage = async (e) => {
-      try { await ready; } catch (err) {
-        postMessage({ type: 'error', text: "SQL didn't load: " + err });
+      try {
+        await ready;
+      } catch (err) {
+        postMessage({ type: 'error', text: 'SQL didn’t load: ' + err });
         postMessage({ type: 'done' });
         return;
       }
       if (e.data.reset) {
         db.close();
         db = new SQL.Database();
+        standIns.clear();
+        placeholders.clear();
         postMessage({ type: 'stdout', text: 'Database reset. All tables are gone.' });
-        postMessage({ type: 'done' });
-        return;
-      }
-      try {
-        const results = db.exec(e.data.code);
-        const changed = db.getRowsModified();
-        if (!results.length) postMessage({ type: 'stdout', text: changed ? 'Done. ' + changed + (changed === 1 ? ' row' : ' rows') + ' changed.' : 'Done.' });
-        for (const result of results) {
-          postMessage({
-            type: 'table',
-            columns: result.columns,
-            rows: result.values.slice(0, ${MAX_ROWS}).map((row) => row.map(show)),
-            total: result.values.length,
-          });
-        }
-      } catch (err) {
-        postMessage({ type: 'error', text: String(err && err.message || err) });
+      } else {
+        run(e.data.code);
       }
       postMessage({ type: 'done' });
-    };`;
+    };
+  }
+
+  const SQL_WORKER = `importScripts('${SQLJS}sql-wasm.js');
+    const SQLJS_BASE = '${SQLJS}';
+    const MAX_ROWS = ${MAX_ROWS};
+    (${sqlWorkerMain.toString()})();`;
 
   let sqlWorker = null;
   let sqlPage = null;
@@ -271,6 +443,7 @@ def _notes_figures():
         else if (ev.type === 'error') line('run-err', ev.text);
         else if (ev.type === 'status') status.textContent = ev.text || 'Running…';
         else if (ev.type === 'table') out.append(tableElement(ev));
+        else if (ev.type === 'note') line('run-text run-note', ev.text);
         else if (ev.type === 'image') { const img = document.createElement('img'); img.src = ev.src; img.alt = 'Figure'; img.className = 'run-fig'; out.append(img); }
         else if (ev.type === 'done') {
           job = null;

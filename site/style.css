@@ -457,6 +457,7 @@ html.share-mode .note { margin: 0 auto; }
 .run-out .run-result { color: var(--ink-2); }
 .run-out .run-empty { color: var(--ink-2); font-style: italic; }
 .run-reset { font-size: .8rem; }
+.run-out .run-note { color: var(--accent); }
 .run-table-wrap { overflow-x: auto; margin: .25rem 0 .5rem; }
 .run-table { border-collapse: collapse; font: 400 .82rem/1.45 var(--font-code); background: var(--paper); }
 .run-table th, .run-table td { border: 1px solid var(--rule); padding: .25rem .6rem; text-align: left; vertical-align: top; white-space: pre-wrap; }
