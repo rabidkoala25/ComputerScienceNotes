@@ -1,13 +1,12 @@
 ---
-title: CLL Task
+title: Circular linked lists (task)
 date: 2026-10-22
-topics: [HW]
+topics: [Linked lists]
+tags: [homework]
 ---
-
-
 1. Draw a circular doubly linked list (CDLL) containing the letters P, Q, R. Clearly label the `Head` (pointing to P) and `Tail` (pointing to R) pointers, and show all `Prev` and `Next` pointers correctly, including the circular links between Head and Tail.
 
-![CDLL Diagram](assets/cll-task/image-1.png)
+![CDLL Diagram](assets/circular-linked-lists-task/image-1.png)
 
 2. Complete the following table comparing the approximate time complexity (using Big O notation - O(1) or O(n)) and memory usage for basic operations on different data structures. Assume 'n' is the number of elements. For linked lists, assume deleting/inserting in the middle requires traversing to find the position, unless specified otherwise.
 3.

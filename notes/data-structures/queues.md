@@ -1,10 +1,9 @@
 ---
-title: Queues Coding
+title: Queues
 date: 2026-10-05
-topics: [SL]
-tags: [arrays, data, dynamic]
+topics: [Data structures]
+tags: [arrays, data, dynamic, sl]
 ---
-
 ```python
 class Queue:
   def __init__(self):

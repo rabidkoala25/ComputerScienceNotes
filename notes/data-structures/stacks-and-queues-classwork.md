@@ -1,11 +1,9 @@
 ---
-title: CLASSWORK B 2.2.4 Queues
+title: Stacks and queues (classwork)
 date: 2026-10-12
-topics: [HW]
+topics: [Data structures]
+tags: [classwork]
 ---
-
-# B2.2.4 Queues Homework:
-
 ## Review Questions:
 
 ### 1. Define the term "stack".

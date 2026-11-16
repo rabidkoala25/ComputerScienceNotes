@@ -1,10 +1,9 @@
 ---
-title: "Databases: Transactions and Data Integrity"
+title: Transactions and data integrity
 date: 2026-11-12
-topics: [HL]
-tags: [data, database]
+topics: [Databases]
+tags: [data, database, hl]
 ---
-
 ## ACID:
 **A**tomicity \
 **C**onsistency \

@@ -1,10 +1,9 @@
 ---
-title: Lists
+title: Lists in Python
 date: 2026-09-25
-topics: [SL]
-tags: [linked-lists, data, dynamic]
+topics: [Data structures]
+tags: [linked-lists, data, dynamic, sl]
 ---
-
 ```python 
 names = ["bob", "claire", "sally"]
 print(len(names))

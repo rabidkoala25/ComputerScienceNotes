@@ -1,10 +1,9 @@
 ---
-title: Bubble sort and selection sort
+title: Bubble and selection sort (homework)
 date: 2026-11-12
-topics: [Hw]
-tags: [sorting, bubble-sort, selection-sort]
+topics: [Algorithms]
+tags: [sorting, bubble-sort, selection-sort, homework]
 ---
-
 # Bubble sort
 
 ## MCQ

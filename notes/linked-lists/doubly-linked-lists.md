@@ -1,10 +1,9 @@
 ---
-title: Doubly Linked Lists
+title: Doubly linked lists
 date: 2026-10-08
-topics: [HL]
-tags: [data, dynamic, linked-lists]
+topics: [Linked lists]
+tags: [data, dynamic, linked-lists, hl]
 ---
-
 | Feature | Arrays | Linked Lists
 |----------|-----------|----------|
 |    Memory allocation      |     Contiguous block of memory     |   non-contiguous with pointers       |

@@ -5,7 +5,6 @@ topics: [About this site]
 tags: [howto]
 description: How to write notes for this site, with an example of every feature.
 ---
-
 Every `.md` file in the `notes/` folder becomes a page. Folders are optional, but a note's first folder becomes its topic if you don't set one.
 
 ## Writing in the browser
@@ -37,7 +36,7 @@ In VS Code, type `note` and pick the snippet to insert this.
 
 ## Linking notes
 
-Write `[[Arrays and linked lists]]` to link by title: [[Arrays and linked lists]]. Use `[[Arrays and linked lists|a label]]` for different link text. Normal relative links such as `[text](data-structures/arrays-and-linked-lists.md)` also work. Linked notes show a "Linked from" list at the bottom.
+Write `[[Arrays and linked lists]]` to link by title: [[Arrays and linked lists]]. Use `[[Arrays and linked lists|a label]]` for different link text. Normal relative links such as `[text](example-arrays-and-linked-lists.md)` also work. Linked notes show a "Linked from" list at the bottom.
 
 ## Callouts
 

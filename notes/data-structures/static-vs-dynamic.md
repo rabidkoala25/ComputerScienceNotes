@@ -1,10 +1,9 @@
 ---
-title: Static vs Dynamic
+title: Static vs dynamic data structures
 date: 2026-09-24
-topics: [SL, B]
-tags: [data, dynamic, static]
+topics: [Data structures]
+tags: [data, dynamic, static, sl]
 ---
-
 ## Static Data Structures
 
 - Defined size at compile time.

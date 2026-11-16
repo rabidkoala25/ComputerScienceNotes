@@ -1,10 +1,9 @@
 ---
-title: Algorithms 2
+title: Bubble and selection sort
 date: 2026-11-05
-topics: [SL]
-tags: [algorithms, algorithm]
+topics: [Algorithms]
+tags: [algorithms, sl]
 ---
-
 # Bubble Sort
 
 ## My solution

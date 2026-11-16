@@ -1,10 +1,9 @@
 ---
-title: Searching Algorithms
+title: Searching algorithms
 date: 2026-10-12
-topics: [SL]
-tags: [arrays, algorithm]
+topics: [Algorithms]
+tags: [arrays, algorithms, sl]
 ---
-
 ## Linear Search
 
 - Start at the beginning of a list

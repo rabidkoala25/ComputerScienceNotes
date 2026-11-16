@@ -1,10 +1,9 @@
 ---
-title: Binary Search HW
+title: Binary search (homework)
 date: 2026-11-05
-topics: [HW]
-tags: [algorithms, algorithm, arrays]
+topics: [Algorithms]
+tags: [algorithms, arrays, homework]
 ---
-
 ## Part 1
 
 ```python

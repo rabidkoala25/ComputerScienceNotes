@@ -1,11 +1,10 @@
 ---
 title: Arrays and linked lists
 date: 2026-09-24
-topics: [Data structures]
+topics: [About this site]
 tags: [arrays, linked-lists, complexity]
 description: Trade-offs between contiguous arrays and pointer-based lists.
 ---
-
 # Arrays
 
 Advantages:
@@ -19,7 +18,7 @@ Disadvantages:
 
 # Linked Lists
 
-![Linked list diagram](assets/arrays-and-linked-lists/linked-list.svg)
+![Linked list diagram](assets/example-arrays-and-linked-lists/linked-list.svg)
 
 ## Singly Linked Lists
 

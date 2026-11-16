@@ -1,15 +1,14 @@
 ---
-title: B4.1.2 Evaluate linked lists ​(SLL)
+title: Singly linked lists (homework)
 date: 2026-09-29
-topics: [HW]
-tags: [data, dynamic]
+topics: [Linked lists]
+tags: [data, dynamic, homework]
 ---
-
 ## Diagrams
 
-![PXL 20260929 203006438.RAW 01.COVER](assets/b4-1-2-evaluate-linked-lists-sll/PXL_20260929_203006438.RAW-01.COVER.jpg)
+![PXL 20260929 203006438.RAW 01.COVER](assets/singly-linked-lists-homework/PXL_20260929_203006438.RAW-01.COVER.jpg)
 
-![PXL 20260929 203013285.RAW 01.COVER](assets/b4-1-2-evaluate-linked-lists-sll/PXL_20260929_203013285.RAW-01.COVER.jpg)
+![PXL 20260929 203013285.RAW 01.COVER](assets/singly-linked-lists-homework/PXL_20260929_203013285.RAW-01.COVER.jpg)
 
 ### 6. 
 

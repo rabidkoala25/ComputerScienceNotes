@@ -1,12 +1,9 @@
 ---
-title: 1D Lists
+title: 1D lists (homework)
 date: 2026-09-25
-topics: [HW]
-tags: [data, dynamic, arrays]
+topics: [Data structures]
+tags: [data, dynamic, arrays, homework]
 ---
-
-# 1D lists
-
 ## Programming exercises
 
 ### first and last

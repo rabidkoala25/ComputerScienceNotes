@@ -1,10 +1,9 @@
 ---
-title: Big O Notation
+title: Big O notation
 date: 2026-10-09
-topics: [SL]
-tags: [data]
+topics: [Algorithms]
+tags: [data, sl]
 ---
-
 Drop constants
 choose biggest O(notation) in the whole algorithm. 
 

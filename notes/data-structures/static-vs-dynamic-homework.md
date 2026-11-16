@@ -1,10 +1,9 @@
 ---
-title: B2.2.1 Homework
+title: Static vs dynamic (homework)
 date: 2026-09-25
-topics: [HW]
-tags: [data]
+topics: [Data structures]
+tags: [data, homework]
 ---
-
 ## *3.*
 | Feature | Static Data Structure | Dynamic Data Structure |
 |----------|----------|----------|

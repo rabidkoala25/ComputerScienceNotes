@@ -1,10 +1,9 @@
 ---
-title: Inthinking Activity
+title: Linear search (activity)
 date: 2026-10-19
-topics: [HW]
-tags: [algorithms]
+topics: [Algorithms]
+tags: [algorithms, homework]
 ---
-
 ## Part 1
 
 ```python

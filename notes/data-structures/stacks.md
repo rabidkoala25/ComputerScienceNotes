@@ -1,12 +1,9 @@
 ---
-title: Stack Coding
+title: Stacks
 date: 2026-10-01
-topics: [SL]
-tags: [data, arrays, dynamic]
+topics: [Data structures]
+tags: [data, arrays, dynamic, sl]
 ---
-
-
-
 ```python
 
 class Stack:

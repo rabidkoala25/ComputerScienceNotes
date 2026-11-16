@@ -1,12 +1,9 @@
 ---
-title: Database transactions and integrity
+title: Transactions and ACID (homework)
 date: 2026-11-12
-topics: [Hw]
-tags: [sql, transactions, acid, tcl]
+topics: [Databases]
+tags: [sql, transactions, acid, tcl, homework]
 ---
-
-# Database transactions and integrity
-
 ## Part 1: ACID properties
 
 ### 1. Bank withdrawal, system crash
