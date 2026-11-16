@@ -404,6 +404,7 @@
     if (A.state.site.firebase) loadLive().catch(() => {});
     updatePreview();
     requestAnimationFrame(() => { cm.refresh(); (d.meta.title ? cm : $('#ed-title', host)).focus(); });
+    if (document.fonts) document.fonts.ready.then(remeasureEditors);
   }
 
   function updateAssetDir() {
@@ -1029,6 +1030,15 @@
       <button type="button" class="linklike" data-ed-next="new">Start a new note</button>
       <button type="button" class="linklike" data-ed-next="keep">Keep editing</button></p>`);
   }
+
+  function remeasureEditors() {
+    if (closed) return;
+    if (cm) cm.refresh();
+    if (fileCm) fileCm.refresh();
+  }
+
+  if (document.fonts) document.fonts.addEventListener('loadingdone', remeasureEditors);
+  window.addEventListener('pageshow', remeasureEditors);
 
   window.NotesEditor = { open, close };
 })();

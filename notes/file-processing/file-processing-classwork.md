@@ -48,9 +48,9 @@ description: B2.5.1 Construct code to perform file-processing operations
 
 > **permanently · sequential · end · closed · line by line**
 
-a) Data in variables is lost when a program is ______________. A file stores data ______________.
+a) Data in variables is lost when a program is **closed**. A file stores data **permamently**.
 
-b) A text file is a ______________ file: data is read ______________ and new records are added to the ______________.
+b) A text file is a **sequential** file: data is read **line by line** and new records are added to the **end**.
 
 **A2** Match each term to its meaning and an example.
 
@@ -59,13 +59,15 @@ b) A text file is a ______________ file: data is read ______________ and new rec
 | **Absolute path** | 1. The location of a file from the current folder | X. `numbers.txt` |
 | **Relative path** | 2. The full location of a file from the root directory | Y. `C:\Users\Ana\CS\numbers.txt` |
 
-Absolute path → ____ , ____
+Absolute path → 2, Y
 
-Relative path → ____ , ____
+Relative path → 1, X
 
 **A3** Give one example of a program that needs to keep data after it is closed.
 
 **Answer:**
+
+A game that saves game states so that you don't have to restart the game every time you play it. 
 
 # Part B: File modes and functions
 
@@ -76,31 +78,31 @@ Relative path → ____ , ____
 
 | Mode | What is it for? | If the file doesn’t exist… | What happens to existing content? |
 |---|---|---|---|
-| **"r"** | | | |
-| **"w"** | | | |
-| **"a"** | | | |
+| **"r"** |reading data from the file |error |nothing |
+| **"w"** |writing data do the file |creates a new file |overwritten |
+| **"a"** | adding text at the end of a file|creates a new file |stays the same, but with new data appended |
 
 **B2** Which mode does `f = open("numbers.txt")` use?
 
 - [ ] **A** `"w"`
-- [ ] **B** `"r"`
+- [x] **B** `"r"`
 - [ ] **C** `"a"`
 
 **B3** A game saves each new high score without losing the old ones. Which mode should it use?
 
 - [ ] **A** `"w"`
 - [ ] **B** `"r"`
-- [ ] **C** `"a"`
+- [x] **C** `"a"`
 
 **B4** Match each function to what it does. Write the letter.
 
 | Function | Letter | What it does |
 |---|---|---|
-| **open()** | | A. Reads the whole file |
-| **read()** | | B. Reads one line |
-| **readline()** | | C. Saves text to the file |
-| **write()** | | D. Finishes with the file so it is saved and released |
-| **close()** | | E. Connects your program to a file, in a chosen mode |
+| **open()** | E| A. Reads the whole file |
+| **read()** | A| B. Reads one line |
+| **readline()** |B | C. Saves text to the file |
+| **write()** | C| D. Finishes with the file so it is saved and released |
+| **close()** | D| E. Connects your program to a file, in a chosen mode |
 
 # Part C: Writing to a file
 
@@ -111,10 +113,10 @@ Relative path → ____ , ____
 
 | Order | Step |
 |---|---|
-| | Write the line to the file |
-| | Close the file |
-| | Open the file for write or append |
-| | Prepare the line of text to be written |
+|3 | Write the line to the file |
+| 4| Close the file |
+| 1| Open the file for write or append |
+| 2| Prepare the line of text to be written |
 
 **C2** What is in **pets.txt** after each program runs? Write the exact contents.
 
@@ -132,7 +134,7 @@ f.close()
 pets.txt contains:
 
 ```
-
+dog
 ```
 
 **Program 2**
@@ -149,12 +151,20 @@ f.close()
 pets.txt contains:
 
 ```
-
+cat
+dog
 ```
 
 **C3** What does `\n` do? What would pets.txt look like in Program 2 without it?
 
 **Answer:**
+
+\n commands for the file to be incremente by one line. if program 2 didn't have it our file would be:
+
+```
+catdog
+```
+
 
 # Part D: Reading from a file
 
@@ -177,6 +187,7 @@ f.close()
 ```
 
 **Answer:**
+only the first line, then a blank line
 
 **D2** This loop prints every line. Why does it stop?
 
@@ -190,20 +201,26 @@ f.close()
 ```
 
 **Answer:**
+At the end of the file, readline() is empty, simply "", and therefore text != "" is false, causing the loop to stop
 
 **D3** Rewrite the loop in D2 using a **for** loop instead (textbook p. 10).
 
 ```python
-
+f = open("numbers.txt", "r")
+for line in f:
+  print(line)
+f.close()
 ```
 
 **D4** When D2 runs, there is a blank line between each line of output. Why?
 
 **Answer:**
+Each line read from file still has \n at the end, and print() adds another \n, so there are two
 
 **D5** The textbook text calls the function `readLine()`. What is its correct name in Python, and why does it matter?
 
 **Answer:**
+readline(), python is case sensitive so readLine() would throw an error
 
 # Part E: Errors and closing files
 
@@ -212,28 +229,30 @@ f.close()
 
 **E1** Give two things that could go wrong when a program works with a file.
 
-1.
-2.
+1. file not found
+2. operation can't be done
 
 **E2** What does a **try** / **except** block do, and why is it useful with files?
 
 **Answer:**
+try essentially tells the program to try its best to do the thing, so if the file has an error it just goes past the try / except block and doesn't crash
 
 **E3** Your program says it can’t find **numbers.txt**, but you can see the file on your computer. Give the most likely reason (see the Top tip).
 
 **Answer:**
+the relative path will only work when the text file is in the same folder as the .py file. either moving the file or using the absolute path would fix it.
 
 **E4** Complete the code so it only reads the file if it exists.
 
 ```python
-import ________
+import os
 
-if ________.path.________("scores.txt"):
-    f = open("scores.txt", "r")
-    print(f.read())
-    f.close()
+if os.path.exists("scores.txt"):
+  f = open("scores.txt", "r",)
+  print(f.read())
+  f.close()
 else:
-    print("________________________")
+  print("The file does not exist")
 ```
 
 **E5** Find and fix the **4 bugs** in this code. It should add two scores to the end of the file, each on its own line.

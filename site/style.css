@@ -506,10 +506,11 @@ html.share-mode .note { margin: 0 auto; }
 .ed-preview { padding: 1.25rem 1.5rem; max-height: 75vh; overflow-y: auto; position: sticky; top: 3.5rem; }
 .ed-panes[data-view="preview"] .ed-preview { max-height: none; position: static; }
 .ed-src .CodeMirror {
-  height: auto; min-height: 60vh; padding: .75rem .5rem; border-radius: 8px;
+  height: auto; min-height: 60vh; border-radius: 8px;
   font: 400 .95rem/1.65 var(--font-code); background: var(--paper); color: var(--ink);
 }
 .ed-src .CodeMirror-scroll { min-height: 60vh; }
+.ed-src .CodeMirror-lines { padding: .75rem .5rem; }
 .CodeMirror { background: var(--paper); color: var(--ink); }
 .CodeMirror-cursor { border-left-color: var(--ink); }
 .CodeMirror-selected, .CodeMirror-focused .CodeMirror-selected { background: var(--accent-soft) !important; }
