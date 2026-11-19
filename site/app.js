@@ -721,10 +721,89 @@
       || null;
   }
 
+  const INK_PROPERTIES = { color: 'color', c: 'color', text: 'color', bg: 'background', background: 'background', highlight: 'background', border: 'border' };
+
+  function inkColour(value) {
+    if (/^#(?:[0-9a-f]{3}|[0-9a-f]{4}|[0-9a-f]{6}|[0-9a-f]{8})$/i.test(value)) return value.toLowerCase();
+    if (/^[a-z]{3,20}$/i.test(value)) return value.toLowerCase();
+    return null;
+  }
+
+  function readableTextOn(background) {
+    if (!background.startsWith('#')) return null;
+    let hex = background.slice(1);
+    if (hex.length <= 4) hex = [...hex].map((digit) => digit + digit).join('');
+    const red = parseInt(hex.slice(0, 2), 16);
+    const green = parseInt(hex.slice(2, 4), 16);
+    const blue = parseInt(hex.slice(4, 6), 16);
+    const brightness = (red * 299 + green * 587 + blue * 114) / 1000;
+    return brightness > 150 ? '#1c2433' : '#ffffff';
+  }
+
+  function parseInk(attrs) {
+    const chosen = {};
+    let scope = 'block';
+    for (const token of attrs.trim().split(/\s+/)) {
+      if (token === 'row' || token === 'col') { scope = token; continue; }
+      const [name, value] = token.startsWith('#') ? ['color', token] : token.split(/[=:]/);
+      const property = INK_PROPERTIES[(name || '').toLowerCase()];
+      const colour = property && value ? inkColour(value) : null;
+      if (!colour) return null;
+      chosen[property] = colour;
+    }
+    const rules = [];
+    if (chosen.color) rules.push(`color:${chosen.color}`);
+    if (chosen.background) {
+      rules.push(`background-color:${chosen.background}`);
+      const autoText = !chosen.color && readableTextOn(chosen.background);
+      if (autoText) rules.push(`color:${autoText}`);
+    }
+    if (chosen.border) rules.push(`border:1px solid ${chosen.border}`);
+    if (!rules.length) return null;
+    return { scope, css: rules.join(';'), boxed: Boolean(chosen.background || chosen.border) };
+  }
+
+  function applyInkSyntax(text) {
+    return text
+      .replace(/^[ \t]*:::[ \t]*\{([^{}\n]+)\}[ \t]*$/gm, (whole, attrs) => {
+        const ink = parseInk(attrs);
+        return ink ? `<div class="ink-box" style="${ink.css}">\n` : whole;
+      })
+      .replace(/^[ \t]*:::[ \t]*$/gm, '\n</div>\n')
+      .replace(/\[([^\[\]\n]+)\]\{([^{}\n]+)\}/g, (whole, inner, attrs) => {
+        const ink = parseInk(attrs);
+        return ink ? `<span class="ink${ink.boxed ? ' ink-boxed' : ''}" style="${ink.css}">${inner}</span>` : whole;
+      })
+      .replace(/(^|[\s|])\{([^{}\n]+)\}/gm, (whole, before, attrs) => {
+        const ink = parseInk(attrs);
+        return ink ? `${before}<span class="ink-mark" data-ink-scope="${ink.scope}" data-ink-css="${ink.css}"></span>` : whole;
+      });
+  }
+
+  function applyInkMarks(prose) {
+    for (const mark of $$('.ink-mark', prose)) {
+      const scope = mark.dataset.inkScope;
+      const css = mark.dataset.inkCss;
+      const cell = mark.closest('td, th');
+      let targets = [];
+      if (cell && scope === 'row') targets = [...cell.parentElement.cells];
+      else if (cell && scope === 'col') targets = [...cell.closest('table').rows].map((row) => row.cells[cell.cellIndex]).filter(Boolean);
+      else {
+        const block = mark.closest('td, th, li, h1, h2, h3, h4, h5, h6, .callout-title, p, .ink-box');
+        if (block) targets = [block.classList.contains('callout-title') ? block.parentElement : block];
+      }
+      for (const target of targets) {
+        target.style.cssText += ';' + css;
+        if (/background|border/.test(css) && !target.matches('td, th, .callout')) target.classList.add('ink-filled');
+      }
+      mark.remove();
+    }
+  }
+
   function renderMarkdown(src) {
     const math = [];
     const hold = (tex, display) => { math.push({ tex, display }); return `MATHPLACEHOLDER${math.length - 1}X`; };
-    const text = mapOutsideCode(stripFrontMatter(src), (s) => s
+    const text = mapOutsideCode(stripFrontMatter(src), (s) => applyInkSyntax(s
       .replace(/\$\$([\s\S]+?)\$\$/g, (_, t) => hold(t, true))
       .replace(/\\\[([\s\S]+?)\\\]/g, (_, t) => hold(t, true))
       .replace(/\\\(([\s\S]+?)\\\)/g, (_, t) => hold(t, false))
@@ -734,7 +813,7 @@
         const shown = (label || target).trim();
         return t ? `[${shown}](#/note/${encodeURI(t.slug)})`
           : `<span class="wiki-missing" title="No note called “${esc(target.trim())}” yet">${esc(shown)}</span>`;
-      }));
+      })));
     let html = window.marked ? marked.parse(text, { gfm: true }) : `<pre>${esc(text)}</pre>`;
     if (window.DOMPurify) html = DOMPurify.sanitize(html);
     return html.replace(/MATHPLACEHOLDER(\d+)X/g, (_, i) => {
@@ -821,6 +900,8 @@
       box.append(head, body);
       bq.replaceWith(box);
     }
+
+    applyInkMarks(prose);
 
     // Tables scroll sideways on small screens
     for (const t of $$('table', prose)) {

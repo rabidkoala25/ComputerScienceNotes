@@ -74,6 +74,49 @@ flowchart LR
 - [x] Push a note
 - [ ] Write the next one
 
+## Colours
+
+Pick a colour in the toolbar (the colour square, or type a hex code next to it), choose **what to colour** from the menu, then press **Text**, **Fill** or **Border**. Pressing a second button on the same text adds to it instead of wrapping it again.
+
+| You write | You get |
+|---|---|
+| `[red words]{color=#e03131}` | [red words]{color=#e03131} |
+| `[highlighted]{bg=#ffe066}` | [highlighted]{bg=#ffe066} |
+| `[short form]{#1c7ed6}` | [short form]{#1c7ed6} |
+| `[all three]{color=#ffffff bg=#c92a2a border=#5c0d0d}` | [all three]{color=#ffffff bg=#c92a2a border=#5c0d0d} |
+
+- **Settings:** `color` (or `c`, `text`), `bg` (or `background`, `highlight`) and `border`. Values are hex codes (`#rgb`, `#rrggbb`, `#rrggbbaa`) or colour names like `teal`.
+- If you only set `bg`, the text colour is picked automatically so it stays readable in light and dark mode.
+- **A whole line, heading or list item:** put the braces at the end, e.g. `## Key idea {color=#7048e8}` or `- Revise this {bg=#fff3bf}`.
+
+### Table colours
+
+Put `{...}` inside a cell to colour that cell, `{row ...}` to colour the whole row, and `{col ...}` in a header cell to colour the whole column.
+
+```markdown
+| Station {col bg=#e7f5ff} | Status | Notes |
+|---|---|---|
+| A | {bg=#d3f9d8} Done | [check again]{color=#e8590c} |
+| B {row bg=#ffe3e3} | Not started | |
+```
+
+| Station {col bg=#e7f5ff} | Status | Notes |
+|---|---|---|
+| A | {bg=#d3f9d8} Done | [check again]{color=#e8590c} |
+| B {row bg=#ffe3e3} | Not started | |
+
+### Coloured boxes
+
+```markdown
+::: {bg=#f3f0ff border=#9775fa}
+Anything inside, **including** lists and maths like $x^2$.
+:::
+```
+
+::: {bg=#f3f0ff border=#9775fa}
+Anything inside, **including** lists and maths like $x^2$.
+:::
+
 ## Images
 
 Paste an image into a note in the browser editor or in VS Code. With the included settings it is saved to `assets/<note name>/` next to the note, and the link just works here. Click any image to enlarge it.

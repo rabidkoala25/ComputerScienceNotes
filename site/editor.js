@@ -334,6 +334,24 @@
             <option value="mermaid">Diagram (Mermaid)</option>
             <option value="hr">Divider</option>
           </select>
+          <span class="tb-sep" aria-hidden="true"></span>
+          <span class="tb-ink" role="group" aria-label="Colour">
+            <label class="visually-hidden" for="ed-ink-picker">Pick a colour</label>
+            <input type="color" id="ed-ink-picker" class="tb-ink-picker" value="#d6336c" title="Pick a colour">
+            <label class="visually-hidden" for="ed-ink-hex">Hex code</label>
+            <input id="ed-ink-hex" class="tb-ink-hex" value="#d6336c" maxlength="9" spellcheck="false" autocomplete="off" title="Hex code">
+            <button type="button" class="tb tb-wide" data-ink-apply="color" title="Text colour">Text</button>
+            <button type="button" class="tb tb-wide" data-ink-apply="bg" title="Background colour">Fill</button>
+            <button type="button" class="tb tb-wide" data-ink-apply="border" title="Border colour">Border</button>
+            <label class="visually-hidden" for="ed-ink-scope">What to colour</label>
+            <select id="ed-ink-scope" class="tb-select" title="What to colour">
+              <option value="text">Selected text</option>
+              <option value="block">Line or table cell</option>
+              <option value="row">Table row</option>
+              <option value="col">Table column</option>
+              <option value="box">Coloured box</option>
+            </select>
+          </span>
           <input type="file" id="ed-image-input" accept="image/*" multiple hidden>
         </div>
         <div class="ed-panes" data-view="${view}">
@@ -382,6 +400,11 @@
     $('#ed-title', host).addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); cm.focus(); } });
     host.querySelector('.editor').addEventListener('click', onEditorClick);
     $('#ed-insert', host).addEventListener('change', (e) => { if (e.target.value) insertSnippet(e.target.value); e.target.value = ''; });
+    $('#ed-ink-picker', host).addEventListener('input', (e) => { $('#ed-ink-hex', host).value = e.target.value; });
+    $('#ed-ink-hex', host).addEventListener('input', (e) => {
+      const colour = readHex(e.target.value);
+      if (colour && colour.length === 7) $('#ed-ink-picker', host).value = colour;
+    });
     $('#ed-image-input', host).addEventListener('change', async (e) => {
       for (const f of e.target.files) await addImage(f, null);
       e.target.value = '';
@@ -544,6 +567,73 @@
       case 'image': return $('#ed-image-input', host).click();
       default: return undefined;
     }
+  }
+
+  const INK_ATTRS = /^\s*(?:(?:row|col|#[0-9a-f]{3,8}|(?:color|c|text|bg|background|highlight|border)[=:][#\w]+)\s*)+$/i;
+
+  function readHex(value) {
+    const hex = value.trim().replace(/^#?/, '#').toLowerCase();
+    return /^#(?:[0-9a-f]{3}|[0-9a-f]{4}|[0-9a-f]{6}|[0-9a-f]{8})$/.test(hex) ? hex : null;
+  }
+
+  function inkKey(token) {
+    if (token.startsWith('#')) return 'color';
+    const key = token.split(/[=:]/)[0].toLowerCase();
+    return { c: 'color', text: 'color', background: 'bg', highlight: 'bg' }[key] || key;
+  }
+
+  function mergeInk(oldAttrs, newAttrs) {
+    const added = newAttrs.split(' ');
+    const kept = oldAttrs.trim().split(/\s+/).filter((token) => token && !added.some((a) => inkKey(a) === inkKey(token)));
+    return [...kept, ...added].join(' ');
+  }
+
+  function addInkToLine(attrs) {
+    const cursor = cm.getCursor('from');
+    const line = cm.getLine(cursor.line);
+    if (!line.trim()) { setStatus('Put the cursor on a line with text first'); return; }
+    if (/^\s*\|?[\s:|-]+$/.test(line) && line.includes('-')) { setStatus('Put the cursor in a table cell, not the --- line'); return; }
+    let start, end, existing = '';
+    if (/^\s*\|/.test(line)) {
+      start = line.lastIndexOf('|', Math.max(0, cursor.ch - 1)) + 1;
+      if (!line.slice(start).trim() && start > 1) start = line.lastIndexOf('|', start - 2) + 1;
+      const found = line.slice(start).match(/^\s*\{([^{}\n]*)\}/);
+      const usable = found && INK_ATTRS.test(found[1]);
+      end = start + (usable ? found[0].length : 0);
+      existing = usable ? found[1] : '';
+    } else {
+      const found = line.match(/(^|[^\]])(\s*\{([^{}\n]*)\}\s*)$/);
+      const usable = found && INK_ATTRS.test(found[3]);
+      start = usable ? found.index + found[1].length : line.trimEnd().length;
+      end = line.length;
+      existing = usable ? found[3] : '';
+    }
+    const merged = existing ? mergeInk(existing, attrs) : attrs;
+    cm.replaceRange(` {${merged}}`, { line: cursor.line, ch: start }, { line: cursor.line, ch: end });
+    cm.focus();
+  }
+
+  function applyInk(property) {
+    const colour = readHex($('#ed-ink-hex', host).value);
+    if (!colour) { setStatus('Type a hex colour like #d6336c'); return; }
+    const attrs = `${property}=${colour}`;
+    const scope = $('#ed-ink-scope', host).value;
+    const selection = cm.getSelection();
+    if (scope === 'box') {
+      if (selection) { cm.replaceSelection(`::: {${attrs}}\n${selection}\n:::`); cm.focus(); return; }
+      const placeholder = 'Text in a coloured box';
+      const text = `::: {${attrs}}\n${placeholder}\n:::`;
+      const start = text.indexOf(placeholder);
+      insertBlock(text, [start, start + placeholder.length]);
+      return;
+    }
+    if (scope === 'text' && selection && !selection.includes('\n')) {
+      const existing = selection.match(/^\[([^\[\]\n]+)\]\{([^{}\n]*)\}$/);
+      cm.replaceSelection(existing ? `[${existing[1]}]{${mergeInk(existing[2], attrs)}}` : `[${selection}]{${attrs}}`, 'around');
+      cm.focus();
+      return;
+    }
+    addInkToLine(scope === 'row' || scope === 'col' ? `${scope} ${attrs}` : attrs);
   }
 
   function insertSnippet(kind) {
@@ -753,6 +843,8 @@
     const t = e.target;
     const tb = t.closest('.tb[data-cmd]');
     if (tb) { command(tb.dataset.cmd); return; }
+    const inkButton = t.closest('[data-ink-apply]');
+    if (inkButton) { applyInk(inkButton.dataset.inkApply); return; }
     const v = t.closest('.seg [data-view]');
     if (v) {
       $('.ed-panes', host).dataset.view = v.dataset.view;

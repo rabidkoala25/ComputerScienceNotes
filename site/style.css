@@ -653,3 +653,12 @@ li.CodeMirror-hint-active { background: var(--accent); color: var(--accent-ink);
   .callout { break-inside: avoid; }
   details.callout > .callout-body { display: block; }
 }
+
+.ink-boxed { padding: 0 .25em; border-radius: 3px; -webkit-box-decoration-break: clone; box-decoration-break: clone; }
+.ink-filled { padding: .15rem .5rem; border-radius: 5px; }
+.ink-box { margin: 1rem 0; padding: .7rem 1rem; border-radius: 8px; }
+.ink-box > :first-child { margin-top: 0; }
+.ink-box > :last-child { margin-bottom: 0; }
+.tb-ink { display: inline-flex; align-items: center; gap: .2rem; }
+.tb-ink-picker { width: 2rem; height: 2rem; padding: 2px; border: 1px solid var(--rule); border-radius: 5px; background: var(--paper); cursor: pointer; }
+.tb-ink-hex { width: 5.4rem; height: 2rem; border: 1px solid var(--rule); border-radius: 5px; background: var(--paper); color: var(--ink); font: .8rem var(--font-code); padding: 0 .4rem; }
