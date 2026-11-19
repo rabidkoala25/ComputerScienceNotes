@@ -95,6 +95,7 @@
       n.langs.forEach((t) => state.labels.langs.has(lc(t)) || state.labels.langs.set(lc(t), LANG_NAMES[lc(t)] || t));
     }
     $$('[data-site-title]').forEach((el) => { el.textContent = state.site.title || 'Notes'; });
+    showVersion();
     $('#sort').value = state.sort;
     renderFilters();
     renderList();
@@ -108,6 +109,17 @@
     }
     route();
     window.addEventListener('hashchange', route);
+  }
+
+  function showVersion() {
+    const box = $('#site-version');
+    const version = state.site.version;
+    if (!box || !version) return;
+    const when = new Date(version.date).toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' });
+    const shortId = state.site.repo
+      ? `<a href="https://github.com/${esc(state.site.repo)}/commit/${esc(version.sha)}" target="_blank" rel="noopener">${esc(version.sha)}</a>`
+      : esc(version.sha);
+    box.innerHTML = `<strong>Version ${esc(String(version.number))}</strong> · ${esc(when)}<br>Last change: ${esc(version.message)} (${shortId})`;
   }
 
   function bindUI() {

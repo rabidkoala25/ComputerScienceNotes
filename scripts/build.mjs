@@ -106,6 +106,13 @@ function gitDates(file) {
     return out.length ? { created: out[out.length - 1].slice(0, 10), updated: out[0].slice(0, 10) } : {};
   } catch { return {}; }
 }
+function versionInfo() {
+  if (!gitOK) return null;
+  try {
+    const [sha, date, message] = git(['log', '-1', '--format=%h%n%aI%n%s']).split('\n');
+    return { number: Number(git(['rev-list', '--count', 'HEAD'])), sha, date, message };
+  } catch { return null; }
+}
 function repoInfo() {
   let repo = config.repo || process.env.GITHUB_REPOSITORY || '';
   let branch = config.branch || process.env.GITHUB_REF_NAME || '';
@@ -275,6 +282,7 @@ const index = {
     repo,
     branch,
     built: new Date().toISOString(),
+    version: versionInfo(),
   },
   notes: notes.map(({ _body, ...n }) => n),
 };

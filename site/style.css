@@ -662,3 +662,6 @@ li.CodeMirror-hint-active { background: var(--accent); color: var(--accent-ink);
 .tb-ink { display: inline-flex; align-items: center; gap: .2rem; }
 .tb-ink-picker { width: 2rem; height: 2rem; padding: 2px; border: 1px solid var(--rule); border-radius: 5px; background: var(--paper); cursor: pointer; }
 .tb-ink-hex { width: 5.4rem; height: 2rem; border: 1px solid var(--rule); border-radius: 5px; background: var(--paper); color: var(--ink); font: .8rem var(--font-code); padding: 0 .4rem; }
+
+.site-version { margin: 1.25rem 0 .5rem; padding-top: .75rem; border-top: 1px solid var(--rule); font: 400 .75rem/1.5 var(--font-ui); color: var(--ink-2); }
+.site-version a { color: inherit; }
