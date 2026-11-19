@@ -245,6 +245,7 @@ the relative path will only work when the text file is in the same folder as the
 **E4** Complete the code so it only reads the file if it exists.
 
 ```python
+
 import os
 
 if os.path.exists("scores.txt"):
@@ -253,8 +254,8 @@ if os.path.exists("scores.txt"):
   f.close()
 else:
   print("The file does not exist")
+  
 ```
-
 **E5** Find and fix the **4 bugs** in this code. It should add two scores to the end of the file, each on its own line.
 
 ```python
@@ -266,14 +267,15 @@ f.close
 
 | Bug | What is wrong? | Fixed line |
 |---|---|---|
-| 1 | | |
-| 2 | | |
-| 3 | | |
-| 4 | | |
+| 1 | scores.txt has no quotes|f = open("scores.txt", "a") |
+| 2 |"r" cannot write, so we need to use "a" |f = open("scores.txt", "a") |
+| 3 |no \n, so both scores go to the same line |f.write("Ana 10\n") and f.write("Ben 8\n") |
+| 4 | close is missing brackets|f.close() |
 
 **E6** Why must you always close a file?
 
 **Answer:**
+so the data gets saved. if you dont the changes can be lost
 
 # Part F: Write code by hand
 
@@ -292,6 +294,16 @@ Test: `write_names("names.txt", ["Ana", "Ben", "Cara"])`
 
 ```python
 
+import os
+
+def write_names(filename, names):
+  f = open(filename, "w")
+  for name in names:
+    f.write(name + "\n")
+  f.close()
+
+write_names("names.txt", ["Ana", "Ben", "Cara"])
+
 ```
 
 **F2** `count_lines(filename)`
@@ -303,6 +315,17 @@ Test: `print(count_lines("names.txt"))` should print 3.
 **Hint:** Start a counter at 0 and add 1 for each line.
 
 ```python
+import os
+
+def count_lines(filename):
+  f = open(filename, "r")
+    count = 0
+  for line in f:
+    count = count + 1
+  f.close()
+  return count
+
+print(count_lines("names.txt"))
 
 ```
 
@@ -316,6 +339,24 @@ Test: if the file contains 4, 6 and 8, the function returns 6.0.
 
 ```python
 
+import os
+
+s = open("f3-test", "w")
+for i in range(1, 11):
+  s.write(i**2 + "\n")
+
+def average_of_file(filename):
+  f = open(filename, "r")
+  total = 0 
+  count = 0 
+  for line in f:
+    total = total + float(line)
+    count = count + 1
+  f.close()
+  return total / count
+
+
+
 ```
 
 *The next four come from the textbook’s exercises on p. 11.*
@@ -328,6 +369,20 @@ If name.txt exists, read the name from it. If not, ask the user for their name a
 
 ```python
 
+import os
+
+def greet():
+  if os.path.exists("name.txt"):
+    f = open("name.txt", "r")
+    name = f.readline()
+    f.close()
+  else:
+    name = input("What is your name? ")
+    f = open("name.txt", "w")
+    f.write(name)
+    f.close()
+  print("Hello " + name + "!")
+
 ```
 
 **F5** `count_runs()` (textbook Q2)
@@ -337,6 +392,22 @@ Use a file to store how many times the program has run. Each time, read the numb
 **Hint:** Files store text, so use `int()` and `str()`.
 
 ```python
+
+import os
+
+
+def count_runs():
+  runs = 0
+  if os.path.exists("runs.txt"):
+    f = open("runs.txt", "r")
+    runs = int(f.read())
+    f.close()
+  runs = runs + 1
+  f = open("runs.txt", "w")
+  f.write(str(runs))
+  f.close()
+  return runs
+
 
 ```
 
@@ -348,6 +419,15 @@ Write 100 random numbers between 1 and 70 to the file, one per line.
 
 ```python
 
+import random
+
+def make_numbers(filename):
+  f = open(filename, "w")
+  for i in range(100):
+    f.write(str(random.randint(1, 70)) + "\n")
+  f.close()
+
+
 ```
 
 **F7** `save_odds(in_file, out_file)` (textbook Q7)
@@ -357,6 +437,17 @@ Read the numbers from in_file and write only the odd numbers to out_file.
 **Hint:** A number is odd if `number % 2 == 1`. You need two files open: one to read, one to write.
 
 ```python
+
+def save_odds(in_file, out_file):
+  source = open(in_file, "r")
+  destination = open(out_file, "w")
+  for line in source:
+    number = int(line)
+    if number % 2 == 1:
+      destination.write(str(number) + "\n")
+  source.close()
+  destination.close()
+
 
 ```
 
@@ -375,20 +466,20 @@ Now type each function into Python exactly as you wrote it on paper, and run its
 
 | Task | Worked first time ✓ | Needed fixing ✓ | What did you have to fix? |
 |---|---|---|---|
-| **F1** | | | |
-| **F2** | | | |
-| **F3** | | | |
-| **F4** | | | |
-| **F5** | | | |
-| **F6** | | | |
-| **F7** | | | |
+| **F1** | ✓| | |
+| **F2** | ✓| | |
+| **F3** | ✓| | |
+| **F4** | ✓| | |
+| **F5** | |✓ | some syntax errors|
+| **F6** | |✓ | forgot import random|
+| **F7** | | ✓| syntax errors|
 
 ## How confident are you?
 
 | I can… | Confident | Getting there | Not yet |
 |---|---|---|---|
-| explain why programs store data in files | | | |
-| choose between r, w and a modes | | | |
-| read a file one line at a time with a loop | | | |
-| write and append to a file | | | |
-| use try/except and close files properly | | | |
+| explain why programs store data in files | ✓| | |
+| choose between r, w and a modes | ✓| | |
+| read a file one line at a time with a loop | ✓| | |
+| write and append to a file | ✓| | |
+| use try/except and close files properly | | ✓| |
