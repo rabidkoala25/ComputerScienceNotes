@@ -383,10 +383,16 @@
     cm = CodeMirror.fromTextArea($('#ed-md', host), {
       mode: { name: 'markdown', fencedCodeBlockHighlighting: true, highlightFormatting: true },
       lineWrapping: true, lineNumbers: false, autoCloseBrackets: '()[]{}', matchBrackets: true, indentUnit: 2, tabSize: 2,
+      viewportMargin: Infinity,
       placeholder: 'Start writing. Paste or drop images straight in. Type [[ to link another note.',
       extraKeys: keymap(),
     });
     cm.setValue(d.md);
+    let lastEditorWidth = 0;
+    new ResizeObserver(([entry]) => {
+      const width = Math.round(entry.contentRect.width);
+      if (width && width !== lastEditorWidth) { lastEditorWidth = width; remeasureEditors(); }
+    }).observe(cm.getWrapperElement());
     cm.clearHistory();
     cm.on('change', () => { d.md = cm.getValue(); scheduleSave(); schedulePreview(); });
     cm.on('paste', onPaste);
