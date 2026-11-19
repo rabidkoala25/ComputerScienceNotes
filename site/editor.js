@@ -59,15 +59,18 @@
   // ---------- library loading ----------
   let libs = null;
   function loadCss(href) {
-    if ($(`link[href="${href}"]`)) return;
-    const l = document.createElement('link');
-    l.rel = 'stylesheet'; l.href = href;
-    document.head.append(l);
+    if ($(`link[href="${href}"]`)) return Promise.resolve();
+    return new Promise((resolve) => {
+      const l = document.createElement('link');
+      l.rel = 'stylesheet'; l.href = href;
+      l.onload = resolve;
+      l.onerror = resolve;
+      document.head.append(l);
+    });
   }
   function loadLibs() {
     libs = libs || (async () => {
-      loadCss(CM_BASE + 'lib/codemirror.css');
-      loadCss(CM_BASE + 'addon/hint/show-hint.css');
+      const styles = Promise.all([loadCss(CM_BASE + 'lib/codemirror.css'), loadCss(CM_BASE + 'addon/hint/show-hint.css')]);
       await A.loadScript(CM_BASE + 'lib/codemirror.js');
       await Promise.all([
         'mode/markdown/markdown.js', 'mode/python/python.js', 'mode/javascript/javascript.js', 'mode/clike/clike.js',
@@ -75,6 +78,7 @@
         'mode/yaml/yaml.js', 'addon/edit/continuelist.js', 'addon/edit/closebrackets.js', 'addon/edit/matchbrackets.js',
         'addon/hint/show-hint.js', 'addon/display/placeholder.js',
       ].map((p) => A.loadScript(CM_BASE + p)));
+      await styles;
     })();
     libs.catch(() => { libs = null; });
     return libs;
@@ -393,6 +397,8 @@
       const width = Math.round(entry.contentRect.width);
       if (width && width !== lastEditorWidth) { lastEditorWidth = width; remeasureEditors(); }
     }).observe(cm.getWrapperElement());
+    cm.getWrapperElement().addEventListener('pointerenter', () => cm.refresh());
+    cm.getWrapperElement().addEventListener('keydown', (e) => { if (/^(Arrow|Page|Home|End)/.test(e.key)) cm.refresh(); }, true);
     cm.clearHistory();
     cm.on('change', () => { d.md = cm.getValue(); scheduleSave(); schedulePreview(); });
     cm.on('paste', onPaste);
