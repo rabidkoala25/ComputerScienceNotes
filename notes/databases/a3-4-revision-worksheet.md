@@ -1,10 +1,11 @@
-\---
-
-title: A3.4 Revision Worksheet — Alternative Databases
-date: 2026-11-19
-topics: \[Databases]
-tags: \[database, hl, revision, worksheet]
 ---
+title: A3.4 revision worksheet (classwork)
+date: 2026-11-19
+topics: [Databases]
+tags: [hl, database, classwork]
+---
+
+
 
 # A3.4 Revision Worksheet — Alternative Databases
 
@@ -12,20 +13,20 @@ tags: \[database, hl, revision, worksheet]
 
 In this lesson you'll revise **A3.4** on your own, using your textbook, the slides and the InThinking ebook. Work through the four stations in order. Use your own words: if you can't explain it without copying, you don't know it yet.
 
-> \*\*Submit:\*\* photos of all your work on Toddle before the next HL lesson.
-> Also revise for your summative on \*\*A3 Databases\*\*.
+> **Submit:** photos of all your work on Toddle before the next HL lesson.
+> Also revise for your summative on **A3 Databases**.
 
-\---
+---
 
-## 1\. Brain dump (5 min, books closed)
+## 1. Brain dump (5 min, books closed)
 
 Write down everything you remember about each heading. Then open your books and add anything you missed **in a different colour**. The things you add are what to focus on today.
 
 ### Since i do not know this yet i will move on to the next, perhaps i will return once i have learned it again.
 
-\---
+---
 
-## 2\. Revision stations (about 10 min each)
+## 2. Revision stations (about 10 min each)
 
 ### Station A: A3.4.1 Types of databases
 
@@ -47,9 +48,10 @@ Decide which type Happy Paws should use for each need, and give a reason.
 |1|Finding the nearest branch to an adopter's postcode|Spatial database|needs to deal with spatial calculations such as distance between data points.|
 |2|A live leaderboard for a fundraising challenge|In-memory|Updates fast, does not need to be fully permament rather just needs to display the data during the challenge.|
 |3|Animal profiles where each species has different fields|NoSQL (document)|Requires fields and values for each species, doesn't need to change very often.|
+|4|Letting staff at three branches access the same system online| Cloud Database
 
 
-\---
+---
 
 ### Station B: A3.4.2 Data warehouses
 
@@ -80,15 +82,15 @@ Why can't Happy Paws' everyday SQLite database easily answer *"Which breeds have
 
  
 
-\---
+---
 
 ### Station C: A3.4.3 OLAP and data mining
 
-#### 1\. OLAP vs data mining
+#### 1. OLAP vs data mining
 
 Explain the difference in **two sentences**.
 
-> \*Hint: one tells you what happened, the other finds what you didn't know.\*
+> *Hint: one tells you what happened, the other finds what you didn't know.*
 
  
 
@@ -98,7 +100,7 @@ Explain the difference in **two sentences**.
 
  
 
-#### 2\. Name the technique
+#### 2. Name the technique
 
 Name the data mining technique that suits each problem.
 
@@ -111,7 +113,7 @@ Name the data mining technique that suits each problem.
 |(e)|Discover that people who sponsor a cat often also buy a calendar|<br><br>|
 |(f)|Find the usual order of steps from first website visit to adoption|<br><br>|
 
-#### 3\. Ethics
+#### 3. Ethics
 
 Describe **one** ethical issue with data mining (such as privacy, bias or transparency) and give a real example.
 
@@ -133,7 +135,7 @@ Describe **one** ethical issue with data mining (such as privacy, bias or transp
 
  
 
-\---
+---
 
 ### Station D: A3.4.4 Distributed databases
 
@@ -223,11 +225,11 @@ Complete a feature card for each feature.
 
  
 
-\---
+---
 
-## 3\. Exam practice (10 min, books closed)
+## 3. Exam practice (10 min, books closed)
 
-### Q1. \[4 marks]
+### Q1. [4 marks]
 
 Outline two characteristics of a NoSQL database that make it suitable for an online shop's product catalogue.
 
@@ -247,7 +249,7 @@ Outline two characteristics of a NoSQL database that make it suitable for an onl
 
  
 
-### Q2. \[4 marks]
+### Q2. [4 marks]
 
 Explain how the time-variant and integrated characteristics of a data warehouse support business intelligence.
 
@@ -267,7 +269,7 @@ Explain how the time-variant and integrated characteristics of a data warehouse 
 
  
 
-### Q3. \[4 marks]
+### Q3. [4 marks]
 
 Distinguish between OLAP and data mining.
 
@@ -287,7 +289,7 @@ Distinguish between OLAP and data mining.
 
  
 
-### Q4. \[4 marks]
+### Q4. [4 marks]
 
 A global online retailer uses a distributed database. Describe how replication and partitioning improve its performance and availability.
 
@@ -307,20 +309,13 @@ A global online retailer uses a distributed database. Describe how replication a
 
  
 
-\---
+---
 
 ## Success criteria
 
-* \[ ] I've completed all four stations in my own words.
-* \[ ] My brain dump shows, in a different colour, what I'd forgotten.
-* \[ ] I've answered the exam questions without using my notes.
-* \[ ] I've written down one question to ask in the next lesson.
+* [ ] I've completed all four stations in my own words.
+* [ ] My brain dump shows, in a different colour, what I'd forgotten.
+* [ ] I've answered the exam questions without using my notes.
+* [ ] I've written down one question to ask in the next lesson.
 
 **My question for next lesson:**
-
- 
-
- 
-
- 
-
