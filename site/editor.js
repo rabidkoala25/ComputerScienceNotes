@@ -764,7 +764,7 @@
     const tabs = $('.ed-files .file-tabs', host);
     if (!tabs) return;
     if (!d.files.some((f) => f.name === d.activeFile)) d.activeFile = (d.files.find((f) => f.kind === 'text') || d.files[0])?.name || null;
-    tabs.innerHTML = d.files.map((f) => `<button type="button" role="tab" class="file-tab file-${f.kind}" data-edfile="${esc(f.name)}" aria-selected="${f.name === d.activeFile}">${esc(f.name)}</button>`).join('');
+    tabs.innerHTML = fileTabsHTML();
     renderFileBody();
   }
 
@@ -798,13 +798,40 @@
     if (/^(python|javascript|sql)$/.test(lang)) {
       A.ensureRunner().then(() => {
         if (!body.isConnected || d.activeFile !== f.name) return;
-        runner = NotesRunner.mount(body, { lang, getCode: () => f.content, getFiles: draftFiles, label: `Run ${f.name.split('/').pop()}` });
+        runner = NotesRunner.mount(body, { lang, getCode: () => f.content, getFiles: draftFiles, onFiles: (ev) => draftFilesChanged(ev, true), label: `Run ${f.name.split('/').pop()}` });
         $('.run-bar', body).insertAdjacentHTML('beforeend', '<span class="run-key">Ctrl+Enter</span>');
       });
     }
   }
 
   const draftFiles = async () => d.files.filter((f) => f.kind === 'text').map((f) => ({ name: f.name, content: f.content }));
+
+  function fileTabsHTML() {
+    return d.files.map((f) => `<button type="button" role="tab" class="file-tab file-${f.kind}" data-edfile="${esc(f.name)}" aria-selected="${f.name === d.activeFile}">${esc(f.name)}</button>`).join('');
+  }
+
+  function draftFilesChanged(ev, fromPanel = false) {
+    if (closed) return;
+    for (const name of ev.removed) {
+      const f = d.files.find((x) => x.name === name && x.kind === 'text');
+      if (!f) continue;
+      d.files = d.files.filter((x) => x !== f);
+      if (f.existing) d.removed.push(name);
+    }
+    for (const { name, content } of ev.changed) {
+      const f = d.files.find((x) => x.name === name);
+      if (!f) d.files.push({ name, kind: 'text', content });
+      else if (f.kind === 'text') f.content = content;
+    }
+    if (fromPanel) {
+      const tabs = $('.ed-files .file-tabs', host);
+      if (tabs) tabs.innerHTML = fileTabsHTML();
+    } else {
+      if (ev.changed.length) d.activeFile = ev.changed[ev.changed.length - 1].name;
+      renderFileTabs();
+    }
+    scheduleSave();
+  }
 
   // ---------- preview ----------
   function schedulePreview() {
@@ -826,7 +853,7 @@
     const fake = { slug: '__draft', path: t.mdPath, title: d.meta.title };
     pane.innerHTML = A.renderMarkdown(d.md || '*Nothing written yet.*');
     A.enhance(pane, fake, { resolveAsset });
-    A.addRunButtons(pane, draftFiles).catch(() => {});
+    A.addRunButtons(pane, draftFiles, draftFilesChanged).catch(() => {});
     A.renderMermaid(pane).catch(() => {});
   }
   function onPreviewClick(e) {

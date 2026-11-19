@@ -551,7 +551,7 @@
     }
     buildToc(prose, n);
     if (n.files.length) showFile(n, 0);
-    addRunButtons(prose, noteFiles(n)).catch((e) => console.warn('Runner failed to load', e));
+    addRunButtons(prose, noteFiles(n), noteFilesChanged(n)).catch((e) => console.warn('Runner failed to load', e));
     const firstHit = markTerms(prose, searchTerms());
     if (heading) scrollToHeading(heading);
     else if (firstHit) firstHit.scrollIntoView({ block: 'center' });
@@ -604,11 +604,15 @@
       </article>`;
   }
 
+  function fileTabsHTML(n, selected) {
+    return n.files.map((f, i) => `<button type="button" role="tab" class="file-tab" data-file="${i}" aria-selected="${i === selected}">${esc(f.name)}</button>`).join('');
+  }
+
   function filesHTML(n) {
     return `<section class="files" aria-labelledby="files-h">
       <h2 id="files-h">Files</h2>
       <div class="file-tabs" role="tablist" aria-label="Attached files">
-        ${n.files.map((f, i) => `<button type="button" role="tab" class="file-tab" data-file="${i}" aria-selected="${i === 0}">${esc(f.name)}</button>`).join('')}
+        ${fileTabsHTML(n, 0)}
       </div>
       <div class="file-panel" role="tabpanel"></div>
     </section>`;
@@ -627,14 +631,45 @@
   // All text files of a note, for writing next to code that runs
   const noteFiles = (n) => () => Promise.all(n.files.filter((f) => f.text).map(async (f) => ({ name: f.name, content: await fetchText(f) })));
 
+  const GENERATED_LANGS = { py: 'python', js: 'javascript', csv: 'csv', json: 'json', md: 'markdown' };
+
+  const noteFilesChanged = (n, fromPanel = false) => (ev) => {
+    n.files = n.files.filter((f) => !ev.removed.includes(f.name));
+    for (const { name, content } of ev.changed) {
+      const extension = name.split('.').pop().toLowerCase();
+      const file = {
+        name, path: `__generated/${n.slug}/${name}`, size: new Blob([content]).size,
+        text: true, lang: GENERATED_LANGS[extension] || 'plaintext', generated: true,
+      };
+      state.cache.set('file:' + file.path, content);
+      const index = n.files.findIndex((f) => f.name === name);
+      if (index >= 0) n.files[index] = file;
+      else n.files.push(file);
+    }
+    if (state.current !== n) return;
+    const body = $('.note-body', main);
+    const section = $('section.files', main);
+    if (!body) return;
+    if (!n.files.length) { if (section) section.remove(); return; }
+    if (section && fromPanel) {
+      const selectedName = $('.file-tab[aria-selected="true"]', section)?.textContent;
+      $('.file-tabs', section).innerHTML = fileTabsHTML(n, n.files.findIndex((f) => f.name === selectedName));
+      return;
+    }
+    if (section) section.remove();
+    body.insertAdjacentHTML('beforeend', filesHTML(n));
+    const lastChanged = ev.changed.length ? ev.changed[ev.changed.length - 1].name : null;
+    showFile(n, Math.max(0, n.files.findIndex((f) => f.name === lastChanged)));
+  };
+
   async function showFile(n, i) {
     const f = n.files[i];
     const panel = $('.file-panel', main);
     if (!f || !panel) return;
     $$('.file-tab', main).forEach((b) => b.setAttribute('aria-selected', String(+b.dataset.file === i)));
     const size = f.size > 1024 ? `${(f.size / 1024).toFixed(1)} KB` : `${f.size} bytes`;
-    panel.innerHTML = `<div class="file-head"><span>${esc(f.lang ? (LANG_NAMES[f.lang] || f.lang) : 'File')}, ${size}</span>
-      <a href="${esc(fileUrl(f))}" download="${esc(f.name.split('/').pop())}">Download</a></div>`;
+    panel.innerHTML = `<div class="file-head"><span>${esc(f.lang ? (LANG_NAMES[f.lang] || f.lang) : 'File')}, ${size}${f.generated ? ', made by your code (not saved)' : ''}</span>
+      <a href="${esc(f.generated ? 'data:text/plain;charset=utf-8,' + encodeURIComponent(state.cache.get('file:' + f.path) || '') : fileUrl(f))}" download="${esc(f.name.split('/').pop())}">Download</a></div>`;
     if (!f.text || f.size > 300000) {
       panel.insertAdjacentHTML('beforeend', `<p class="muted">${f.text ? 'Too large to show here.' : 'This file type can’t be shown here.'} Use Download to open it.</p>`);
       return;
@@ -657,7 +692,7 @@
     if (canRunLang(f.lang)) {
       await ensureRunner();
       if (state.current !== n) return;
-      NotesRunner.mount(panel, { lang: f.lang, getCode: () => text, getFiles: noteFiles(n), label: `Run ${f.name.split('/').pop()}` });
+      NotesRunner.mount(panel, { lang: f.lang, getCode: () => text, getFiles: noteFiles(n), onFiles: noteFilesChanged(n, true), label: `Run ${f.name.split('/').pop()}` });
     }
   }
 
@@ -670,7 +705,7 @@
   }
 
   // Adds Run buttons under Python and JavaScript code blocks
-  async function addRunButtons(prose, getFiles) {
+  async function addRunButtons(prose, getFiles, onFiles = null) {
     const blocks = $$('pre > code', prose).filter((c) => canRunLang((c.className.match(/language-([\w+#-]+)/) || [])[1]));
     if (!blocks.length) return;
     await ensureRunner();
@@ -682,7 +717,7 @@
       host.className = 'run-host';
       pre.after(host);
       const src = code.textContent;
-      NotesRunner.mount(host, { lang, getCode: () => src, getFiles });
+      NotesRunner.mount(host, { lang, getCode: () => src, getFiles, onFiles });
     }
   }
 

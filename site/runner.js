@@ -51,19 +51,62 @@ def _notes_figures():
     })();
     ready.then(() => postMessage({ type: 'ready' }), (e) => postMessage({ type: 'fatal', text: String(e) }));
 
+    function clearFolder(folder) {
+      for (const name of py.FS.readdir(folder)) {
+        if (name === '.' || name === '..') continue;
+        const full = folder + '/' + name;
+        if (py.FS.isDir(py.FS.stat(full).mode)) { clearFolder(full); py.FS.rmdir(full); }
+        else py.FS.unlink(full);
+      }
+    }
+
+    function readFolder(folder, prefix, found) {
+      for (const name of py.FS.readdir(folder)) {
+        if (name === '.' || name === '..' || name === '__pycache__') continue;
+        const full = folder + '/' + name;
+        if (py.FS.isDir(py.FS.stat(full).mode)) readFolder(full, prefix + name + '/', found);
+        else found.set(prefix + name, py.FS.readFile(full));
+      }
+      return found;
+    }
+
+    function sameBytes(first, second) {
+      if (first.length !== second.length) return false;
+      for (let i = 0; i < first.length; i++) if (first[i] !== second[i]) return false;
+      return true;
+    }
+
+    function reportFiles(before) {
+      let after;
+      try { after = readFolder(WORK, '', new Map()); } catch { return; }
+      const decoder = new TextDecoder('utf-8', { fatal: true });
+      const changed = [], skipped = [];
+      for (const [name, bytes] of after) {
+        if (before.has(name) && sameBytes(before.get(name), bytes)) continue;
+        try { changed.push({ name, content: decoder.decode(bytes), isNew: !before.has(name) }); }
+        catch { skipped.push(name); }
+      }
+      const removed = [...before.keys()].filter((name) => !after.has(name));
+      if (changed.length || removed.length || skipped.length) postMessage({ type: 'files', changed, removed, skipped });
+    }
+
     self.onmessage = async (e) => {
       const { code, files } = e.data;
+      const tracksFiles = /^[ \\t]*import[ \\t]+os\\b/m.test(code);
       try { await ready; } catch { return; }
       const send = (type) => (text) => postMessage({ type, text });
       py.setStdout({ batched: send('stdout') });
       py.setStderr({ batched: send('stderr') });
       py.setStdin({ stdin: () => null });
+      let before = null;
       try {
+        if (tracksFiles) clearFolder(WORK);
         for (const f of files || []) {
           const p = WORK + '/' + f.name;
           py.FS.mkdirTree(p.split('/').slice(0, -1).join('/'));
           py.FS.writeFile(p, f.content);
         }
+        if (tracksFiles) before = readFolder(WORK, '', new Map());
         py.globals.get('_notes_prepare')(WORK);
         await py.loadPackagesFromImports(code, { messageCallback: send('status'), errorCallback: send('stderr') });
         const ns = builtins.dict();
@@ -80,6 +123,7 @@ def _notes_figures():
       } catch (err) {
         postMessage({ type: 'error', text: String(err && err.message || err) });
       }
+      if (before) reportFiles(before);
       postMessage({ type: 'done' });
     };`;
 
@@ -405,7 +449,7 @@ def _notes_figures():
 
   // ---------- UI ----------
   // mount(host, { lang, getCode, getFiles }) adds a Run button and an output area to host.
-  function mount(host, { lang, getCode, getFiles = async () => [], label = 'Run' }) {
+  function mount(host, { lang, getCode, getFiles = async () => [], onFiles = null, label = 'Run' }) {
     const bar = document.createElement('div');
     bar.className = 'run-bar';
     const isSql = RUNNABLE[String(lang).toLowerCase()] === 'sql';
@@ -445,6 +489,12 @@ def _notes_figures():
         else if (ev.type === 'table') out.append(tableElement(ev));
         else if (ev.type === 'note') line('run-text run-note', ev.text);
         else if (ev.type === 'image') { const img = document.createElement('img'); img.src = ev.src; img.alt = 'Figure'; img.className = 'run-fig'; out.append(img); }
+        else if (ev.type === 'files') {
+          for (const f of ev.changed) line('run-text run-note', `${f.isNew ? 'Created' : 'Updated'} ${f.name}`);
+          for (const name of ev.removed) line('run-text run-note', `Deleted ${name}`);
+          for (const name of ev.skipped) line('run-text run-warn', `${name} isn't a text file, so it wasn't added to Files`);
+          if (onFiles) onFiles(ev);
+        }
         else if (ev.type === 'done') {
           job = null;
           btn.disabled = false;

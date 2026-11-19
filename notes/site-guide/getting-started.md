@@ -17,6 +17,8 @@ Under the text, **Files** holds code and data that belong to the note: write Pyt
 
 A note's files live in `assets/<note file name>/` next to it, alongside its images. They share the note's date, topics and tags, their contents are searchable, and they appear under **Code** in the sidebar filters (try `lang:python` in search). Python and JavaScript files and code blocks get a **Run** button; Python runs in the browser with Pyodide, including numpy, pandas and matplotlib.
 
+If Python code has `import os`, it runs on a fresh copy of the note's files, and any file it creates, changes or deletes shows up in **Files** afterwards. In the editor those changes are saved with the note; on a published note they last until you reload the page.
+
 ## The note header
 
 Put this at the very top of a note. Every line is optional.
